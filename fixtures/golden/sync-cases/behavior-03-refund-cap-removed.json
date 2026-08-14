@@ -1,9 +1,0 @@
-{
-  "key": "behavior-03-refund-cap-removed",
-  "verdict": "behavior-changed",
-  "rule": "A refund can never exceed the sum of captures.",
-  "file": "src/payments/refunds.ts",
-  "symbol": "processRefund",
-  "old": "export function processRefund(amount: number, captured: number): number {\n  return Math.min(amount, captured);\n}",
-  "new": "export function processRefund(amount: number, captured: number): number {\n  return amount;\n}"
-}

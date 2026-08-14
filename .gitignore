@@ -1,25 +1,29 @@
-# dependencies
-node_modules/
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
 
 # build output
+build/
 dist/
-out/
-release/
-*.tsbuildinfo
-coverage/
 
-# local caches (regenerated from .md, never the source of truth). `**/` because these also appear
-# under fixtures/: running `pnpm dev` without opening a project falls back to the acme-commerce
-# fixture, and the sync-on-focus rewrites its state.json with the current commit — dirtying the
-# working tree on every launch. Anchored patterns (a slash in the middle) only matched the root.
-**/.alethic/index.json
-**/.alethic/state.json
+# environments
+.venv/
+venv/
 
-# golden-scan run reports (calibration artifacts)
-fixtures/golden/reports/
+# tooling caches
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
 
-# secrets — the app reads ANTHROPIC_API_KEY from the environment, so a local .env is the one
-# file most likely to be created here and the one that must never be committed
+# what Specrun writes into a project it is installed in. Kept out of this repo because the
+# repository is the package's source, not one of its target projects.
+.specrun/
+
+# secrets
 .env
 .env.*
 !.env.example
@@ -28,6 +32,7 @@ fixtures/golden/reports/
 .DS_Store
 Thumbs.db
 .idea/
+.vscode/
 
 # local, kept out of the repo by project preference
 .claude

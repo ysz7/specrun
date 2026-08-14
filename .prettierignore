@@ -1,7 +1,0 @@
-**/dist/**
-**/out/**
-**/node_modules/**
-docs/**
-fixtures/**
-coverage/**
-pnpm-lock.yaml

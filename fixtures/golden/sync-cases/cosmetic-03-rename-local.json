@@ -1,9 +1,0 @@
-{
-  "key": "cosmetic-03-rename-local",
-  "verdict": "cosmetic",
-  "rule": "Tax is computed on the discounted amount at 20%.",
-  "file": "src/payments/tax.ts",
-  "symbol": "computeTax",
-  "old": "export function computeTax(amount: number): number {\n  const rate = 0.2;\n  return amount * rate;\n}",
-  "new": "export function computeTax(amount: number): number {\n  const taxRate = 0.2;\n  return amount * taxRate;\n}"
-}

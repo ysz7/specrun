@@ -1,7 +1,0 @@
-{
-  "name": "acme-commerce",
-  "version": "1.0.0",
-  "private": true,
-  "type": "module",
-  "description": "Golden fixture: a small commerce backend with deliberate scanner traps (§7)."
-}

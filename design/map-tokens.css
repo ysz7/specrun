@@ -1,0 +1,473 @@
+/*
+ * Specrun map — design tokens and base classes.
+ *
+ * The machine-readable half of `design/map-reference.md`. The Electron prototype had no
+ * stylesheet: its palette lived in a TypeScript token object and everything else was inline
+ * React styles, so this file is that design transcribed into plain CSS with nothing added and
+ * nothing invented. Read the reference for the reasoning behind the values.
+ *
+ * Intended use: inline this into the map's self-contained HTML template. It depends on no fonts,
+ * no assets and no build step, which is what lets the generated map open from a double click.
+ *
+ * Light only. The prototype never had a dark palette, so there is nothing to transcribe here;
+ * a dark theme has to be designed rather than recovered.
+ */
+
+:root {
+  color-scheme: light;
+
+  /* Surfaces */
+  --bg: #f7f4ed;
+  --paper: #fbf9f4;
+  --card: #fdfcf9;
+
+  /* Text */
+  --ink: #23221e;
+  --sub: #6e6961;
+  --faint: #a39d92;
+
+  /* Lines */
+  --line: #c9c2b4;
+  --line-soft: #ddd7ca;
+  --edge: #3a3833;
+
+  /* Accent and semantics */
+  --orange: #d9622b;
+  --orange-soft: rgba(217, 98, 43, 0.08);
+  /* Opaque twin of --orange-soft composited over --bg: a card a connector passes beneath needs an
+     opaque fill, or the line shows through and reads as passing over the card. */
+  --orange-tint: #f5e8dd;
+  --orange-edge: rgba(217, 98, 43, 0.35);
+  --green: #7a9464;
+  --green-soft: rgba(122, 148, 100, 0.12);
+  --blue: #4a6b8a;
+
+  /* Families. No web fonts are bundled — system faces only, which is what keeps the map portable. */
+  --serif: "Tiempos Text", Georgia, "Times New Roman", serif;
+  --sans: Inter, -apple-system, "Segoe UI", sans-serif;
+  --mono: "SF Mono", ui-monospace, Menlo, monospace;
+
+  /* Shape. Cards 10, controls and popovers 8–9, badges 5 — small elements get about half the
+     card's radius so the corners stay one family. */
+  --radius-card: 10px;
+  --radius-control: 9px;
+  --radius-panel: 8px;
+  --radius-badge: 5px;
+  /* 1px vanishes against the warm canvas, 2px makes cards read as buttons. */
+  --border-w: 1.5px;
+
+  /* Elevation. In-flow cards get a hairline of separation; only floating layers cast a real shadow. */
+  --shadow-card: 0 1px 2px rgba(35, 34, 30, 0.04);
+  --shadow-card-active: 0 3px 14px rgba(35, 34, 30, 0.12);
+  --shadow-popover: 0 6px 20px rgba(0, 0, 0, 0.12);
+
+  /* Layout. Depth is carried by card width and by the gaps: loose between levels, tight within one. */
+  --column-w: 720px;
+  --row-max-w: 680px;
+  --apex-max-w: 440px;
+  --card-focused-w: 320px;
+  --card-child-w: 300px;
+  --gap-top: 68px;
+  --gap-apex-row: 46px;
+  --gap-row-focused: 40px;
+  --gap-stack: 20px;
+  --gap-chip: 8px;
+  --junction-offset: 26px;
+  --gap-bottom: 160px;
+}
+
+/* ---------------------------------------------------------------- canvas */
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--sans);
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--line);
+  border-radius: 4px;
+}
+
+/* The map is one centred column on a plain canvas — no grid, no frame, no panel around it. */
+.map-column {
+  width: var(--column-w);
+  margin: 0 auto;
+  padding-top: var(--gap-top);
+  padding-bottom: var(--gap-bottom);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  z-index: 1;
+}
+
+/* ------------------------------------------------------------------ card */
+
+.node {
+  background: var(--card);
+  border: var(--border-w) solid var(--line);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+  padding: 9px 13px;
+  width: var(--card-child-w);
+  box-sizing: border-box;
+  position: relative;
+  z-index: 1;
+  cursor: pointer;
+  transition:
+    opacity 0.25s,
+    border-color 0.2s,
+    box-shadow 0.2s;
+}
+
+/* Card size encodes depth: the further down the tree, the narrower and tighter the card.
+   Nothing else in the design says how deep you are. */
+.node--apex {
+  width: auto;
+  max-width: var(--apex-max-w);
+  padding: 14px 24px;
+  text-align: center;
+}
+
+.node--focused {
+  width: var(--card-focused-w);
+  padding: 13px 18px;
+}
+
+.node--chip {
+  width: auto;
+  padding: 7px 12px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+/* Solid means confirmed, dashed means asserted but not verified — the semantic core of the design.
+   Colour then says how much it matters: orange dashed is a problem, grey dashed is merely unverified. */
+.node--unverified {
+  border-style: dashed;
+}
+
+.node--attention {
+  border-color: var(--orange);
+}
+
+.node--active {
+  border-color: var(--orange);
+  box-shadow: var(--shadow-card-active);
+  /* Above the connector layer, with an opaque fill, so no line shows through. */
+  z-index: 2;
+  background: var(--orange-tint);
+}
+
+/* Filtered-out cards stay laid out at 0.28 rather than disappearing, so the arrangement
+   never jumps under the reader. */
+.node--dim {
+  opacity: 0.28;
+}
+
+.node--hidden {
+  opacity: 0;
+}
+
+.node--busy {
+  animation: node-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes node-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(217, 98, 43, 0.35);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(217, 98, 43, 0);
+  }
+}
+
+/* There is deliberately no :hover rule for .node — cards answer to selection, not to the pointer.
+   On a dense map, hover highlighting turns into flicker. */
+
+/* -------------------------------------------------------- card contents */
+
+/* Three levels per card is the ceiling: name, one sentence, machine facts. A fourth has nowhere
+   to go. The split of families is what keeps the card readable — the sentence is sans, every
+   machine fact is mono and visibly smaller. */
+
+.node__row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.node__title {
+  font-size: 12.5px;
+  font-weight: 550;
+  line-height: 1.3;
+  color: var(--ink);
+}
+
+.node--chip .node__title {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.node--focused .node__title {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+/* Only the name of a thing is set in serif; its rarity is what gives it weight. */
+.node--apex .node__title {
+  font-family: var(--serif);
+  font-size: 20px;
+  font-weight: 600;
+}
+
+/* The short rule under the apex title is why the apex reads as the root without being bigger
+   than everything else. */
+.node--apex .node__rule {
+  width: 36px;
+  height: 2px;
+  background: var(--orange);
+  margin: 7px auto 0;
+}
+
+.node__statement {
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--sub);
+  margin-top: 6px;
+}
+
+.node--apex .node__statement {
+  font-size: 12.5px;
+  color: var(--ink);
+  margin-top: 8px;
+}
+
+.node__meta {
+  font-size: 12px;
+  color: var(--sub);
+  margin-top: 7px;
+}
+
+/* Annotations indent past the status dot so they line up with the title. */
+.node__notes {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+  padding-left: 16px;
+}
+
+.node__note {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  color: var(--faint);
+}
+
+.node__note--warn {
+  color: var(--orange);
+}
+
+.node__count {
+  margin-left: auto;
+  font-family: var(--mono);
+  font-size: 9.5px;
+  color: var(--faint);
+}
+
+.node--focused .node__count {
+  font-size: 10px;
+}
+
+.node__hint {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--orange);
+  margin-top: 6px;
+}
+
+.node__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 99px;
+  flex-shrink: 0;
+  background: var(--green);
+}
+
+.node__dot--warn {
+  background: var(--orange);
+}
+
+.node__dot--muted {
+  background: var(--faint);
+}
+
+/* ---------------------------------------------------------------- badges */
+
+.badge {
+  font-family: var(--mono);
+  font-size: 9px;
+  border-radius: var(--radius-badge);
+  padding: 1px 5px;
+  border: 1px solid var(--line);
+  color: var(--faint);
+  background: transparent;
+}
+
+.badge--warn {
+  font-size: 9.5px;
+  color: var(--orange);
+  background: var(--orange-soft);
+  border-color: var(--orange-edge);
+}
+
+.badge--ok {
+  color: var(--green);
+  background: var(--green-soft);
+  border-color: rgba(122, 148, 100, 0.35);
+}
+
+/* ------------------------------------------------------------ connectors */
+
+/* One SVG layer beneath the cards. Two line kinds is the budget: dark, thin, continuous and
+   arrowed reads as structure; orange, thick, dotted and unarrowed reads as sequence. */
+
+.edges {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: visible;
+}
+
+/* Containment. Drawn as an orthogonal elbow with 9px rounded corners — never a diagonal, never a
+   bezier — and stopped ~12px short of the child so the arrowhead sits in clear space. */
+.edge-contains {
+  fill: none;
+  stroke: var(--edge);
+  stroke-width: 1.5;
+}
+
+/* Order between siblings. A zero-length dash with a round cap renders as dots, not dashes:
+   thicker than the structural line but visually lighter, because it is mostly gap. */
+.edge-sequence {
+  fill: none;
+  stroke: var(--orange);
+  stroke-width: 2.2;
+  stroke-dasharray: 0.1 6.5;
+  stroke-linecap: round;
+}
+
+/* Arrowhead marker, for reference — belongs in the SVG <defs> of the template:
+ *
+ * <marker id="arrow" orient="auto" markerWidth="9" markerHeight="9" refX="6.5" refY="3.5">
+ *   <path d="M0,0 L7,3.5 L0,7 z" fill="#3a3833" />
+ * </marker>
+ */
+
+/* -------------------------------------------------------- chrome, controls */
+
+.crumbs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 14px;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: var(--faint);
+}
+
+.crumbs__link {
+  color: var(--sub);
+}
+
+.crumbs__current {
+  color: var(--ink);
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--gap-chip);
+  max-width: var(--row-max-w);
+}
+
+.pill {
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: var(--radius-panel);
+  border: var(--border-w) solid var(--line);
+  background: var(--card);
+  color: var(--sub);
+  cursor: pointer;
+}
+
+.pill--on {
+  color: #fff;
+  background: var(--orange);
+  border-color: var(--orange);
+}
+
+.btn {
+  font-family: var(--sans);
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #fff;
+  background: var(--orange);
+  border: none;
+  border-radius: var(--radius-control);
+  padding: 11px 16px;
+  cursor: pointer;
+}
+
+.btn--ghost {
+  font-weight: 400;
+  color: var(--sub);
+  background: none;
+  border: var(--border-w) solid var(--line);
+  padding: 10px 16px;
+}
+
+.panel {
+  background: var(--card);
+  border: var(--border-w) solid var(--line);
+  border-radius: var(--radius-panel);
+  box-shadow: var(--shadow-popover);
+  padding: 6px;
+}
+
+.statusbar {
+  height: 26px;
+  background: var(--card);
+  border-top: var(--border-w) solid var(--line-soft);
+  display: flex;
+  align-items: center;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: var(--sub);
+}
+
+.statusbar__item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0 10px;
+  height: 100%;
+  cursor: pointer;
+}
+
+.statusbar__item--on {
+  color: var(--orange);
+}

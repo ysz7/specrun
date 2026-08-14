@@ -1,11 +1,27 @@
 # Line endings are normalized to LF in the repository and in every working copy.
 #
-# Without this, a Windows checkout with core.autocrlf=true (the default on GitHub's Windows runners)
-# rewrites every file to CRLF, and the `.alethic/` fixtures stop parsing — which is exactly how CI
-# failed while the same commit was green on a Windows machine whose working copy still held LF.
-# The parser now tolerates CRLF on its own; this keeps the bytes consistent so diffs stay clean and
-# nobody debugs an invisible whitespace difference between two machines.
-* text=auto eol=lf
+# This is not cosmetic here. `init` and `sync` record a sha256 for every file they write into a
+# project and refuse to overwrite a file whose hash no longer matches, so that work done by hand
+# is never destroyed. A checkout that rewrote LF to CRLF would change those bytes without anyone
+# touching the files, and every one of them would be reported as edited by hand — a failure that
+# looks like a bug in the hash rule rather than a line-ending difference.
+*		text=auto eol=lf
+
+# Explicit for the content that ends up in that comparison: blueprints and skill markdown, the
+# generated index, workflow and config files, licence texts. `text=auto` would almost certainly
+# classify these correctly on its own, but "almost certainly" is not a good basis for a rule whose
+# failure is silent.
+*.md		text eol=lf
+*.txt		text eol=lf
+*.json		text eol=lf
+*.yml		text eol=lf
+*.yaml		text eol=lf
+*.toml		text eol=lf
+*.py		text eol=lf
+*.html		text eol=lf
+*.css		text eol=lf
+LICENSE			text eol=lf
+THIRD_PARTY_LICENSES	text eol=lf
 
 # Binary — never touched, never diffed as text.
 *.png binary
@@ -13,4 +29,3 @@
 *.jpg binary
 *.ico binary
 *.icns binary
-*.wasm binary

@@ -1,9 +1,0 @@
-{
-  "files": [],
-  "references": [
-    { "path": "packages/format" },
-    { "path": "packages/ipc" },
-    { "path": "packages/scan" },
-    { "path": "packages/agent" }
-  ]
-}
