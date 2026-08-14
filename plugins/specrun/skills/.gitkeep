@@ -1,0 +1,3 @@
+# The skills live here from phase 4 onward. The folder is kept even while empty: the wheel build
+# copies it into the package, and a missing directory fails the build rather than producing an
+# empty one.

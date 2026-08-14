@@ -1,0 +1,53 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "specrun"
+description = "Blueprints and skills for the AI you already code with"
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Denys Zhodik" }]
+# 3.11 for tomllib in the standard library. Blueprint frontmatter is parsed without pyyaml, so
+# the one structured format we can rely on has to come from Python itself.
+requires-python = ">=3.11"
+dependencies = []
+dynamic = ["version"]
+keywords = ["ai", "agents", "claude", "architecture", "documentation"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Environment :: Console",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Software Development :: Documentation",
+]
+
+[project.scripts]
+specrun = "specrun.cli:main"
+
+[dependency-groups]
+dev = ["pytest>=8"]
+
+# One source of truth for the version: the package itself. A second copy in this file would be
+# the first thing to go stale.
+[tool.hatch.version]
+path = "src/specrun/__init__.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/specrun"]
+
+# The plugin folder is the canonical home of the content: the Claude Code marketplace reads it
+# straight from git and has no build step, so it has to be usable where it lies. The wheel is
+# built, so the copy goes in this direction — into the package — and never the other way.
+[tool.hatch.build.targets.wheel.force-include]
+"plugins/specrun/skills" = "specrun/_content/skills"
+
+[tool.hatch.build.targets.sdist]
+include = ["src/specrun", "plugins/specrun", "tests", "README.md", "LICENSE"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

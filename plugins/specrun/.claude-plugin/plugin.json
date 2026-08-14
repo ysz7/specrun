@@ -1,0 +1,11 @@
+{
+  "name": "specrun",
+  "description": "Architectural blueprints your AI picks up on its own, a skill that writes new ones from work you have just done, and an architecture map of the project.",
+  "version": "0.1.0",
+  "author": {
+    "name": "Denys Zhodik"
+  },
+  "homepage": "https://github.com/ysz7/specrun",
+  "license": "MIT",
+  "keywords": ["architecture", "blueprints", "documentation", "map"]
+}
