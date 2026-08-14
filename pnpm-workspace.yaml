@@ -1,0 +1,10 @@
+packages:
+  - packages/*
+  - apps/*
+allowBuilds:
+  esbuild: true
+  electron: true
+  node-pty: false
+  # electron-winstaller builds a native module only for the Squirrel.Windows target; we ship NSIS,
+  # so its build script is not needed. Explicitly false so `pnpm install` doesn't error on it.
+  electron-winstaller: false

@@ -1,0 +1,44 @@
+# Packaging config (Phase 11 task 4, decision 30). Windows-first: an unsigned NSIS installer —
+# SmartScreen will warn until a certificate is added for a public release, which is acceptable at
+# this stage. macOS ships too (dmg, below); no Linux target — Alethic is a desktop dev tool, not
+# something installed on a server, and Ubuntu was dropped from CI/release for the same reason.
+# Run `pnpm --filter @alethic/desktop dist:win` (network needed on first run to fetch the NSIS
+# toolchain) or `pnpm --filter @alethic/desktop dist` for the current platform. Auto-update stays
+# off; updates are the static-JSON banner (decision 33).
+appId: app.alethic.desktop
+productName: Alethic
+copyright: © 2026 Alethic
+
+directories:
+  buildResources: build
+  output: release
+
+# electron-vite emits to out/; ship that plus the bundled fixture used as a dev fallback isn't
+# packaged — only the app bundle and node_modules electron-builder resolves from package.json.
+files:
+  - out/**/*
+  - package.json
+
+win:
+  # nsis = the installer (decision 30); dir = a plain unpacked folder (release/win-unpacked/) whose
+  # Alethic.exe runs on a double-click with no install step. Both are produced in one build.
+  target:
+    - nsis
+    - dir
+  icon: build/icon.ico
+
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  artifactName: ${productName}-Setup-${version}.${ext}
+  installerIcon: build/icon.ico
+  uninstallerIcon: build/icon.ico
+
+mac:
+  target: dmg
+  icon: build/icon.png
+  category: public.app-category.developer-tools
+
+# No auto-update publishing; the app checks a static JSON feed itself (decision 33).
+publish: null

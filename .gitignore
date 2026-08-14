@@ -1,0 +1,35 @@
+# dependencies
+node_modules/
+
+# build output
+dist/
+out/
+release/
+*.tsbuildinfo
+coverage/
+
+# local caches (regenerated from .md, never the source of truth). `**/` because these also appear
+# under fixtures/: running `pnpm dev` without opening a project falls back to the acme-commerce
+# fixture, and the sync-on-focus rewrites its state.json with the current commit — dirtying the
+# working tree on every launch. Anchored patterns (a slash in the middle) only matched the root.
+**/.alethic/index.json
+**/.alethic/state.json
+
+# golden-scan run reports (calibration artifacts)
+fixtures/golden/reports/
+
+# secrets — the app reads ANTHROPIC_API_KEY from the environment, so a local .env is the one
+# file most likely to be created here and the one that must never be committed
+.env
+.env.*
+!.env.example
+
+# editor / os
+.DS_Store
+Thumbs.db
+.idea/
+
+# local, kept out of the repo by project preference
+.claude
+CLAUDE.md
+PLAN.md

@@ -1,0 +1,10 @@
+{
+  "key": "behavior-01-discount-order",
+  "verdict": "behavior-changed",
+  "trap": true,
+  "rule": "Discount applies to subtotal before tax.",
+  "file": "src/payments/discounts.ts",
+  "symbol": "applyDiscounts",
+  "old": "export function applyDiscounts(order: Order): number {\n  const discounted = order.subtotal - order.subtotal * 0.1;\n  return computeTax(discounted) + discounted;\n}",
+  "new": "export function applyDiscounts(order: Order): number {\n  const taxed = order.subtotal + computeTax(order.subtotal);\n  return taxed - taxed * 0.1;\n}"
+}

@@ -1,0 +1,9 @@
+{
+  "key": "cosmetic-05-reorder-independent",
+  "verdict": "cosmetic",
+  "rule": "An order total is never negative.",
+  "file": "src/orders/checkout.ts",
+  "symbol": "orderTotal",
+  "old": "export function orderTotal(order: Order): number {\n  const items = sum(order.items);\n  const shipping = order.shipping;\n  return Math.max(0, items + shipping);\n}",
+  "new": "export function orderTotal(order: Order): number {\n  const shipping = order.shipping;\n  const items = sum(order.items);\n  return Math.max(0, items + shipping);\n}"
+}

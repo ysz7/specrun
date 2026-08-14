@@ -1,0 +1,9 @@
+{
+  "key": "cosmetic-04-comment-only",
+  "verdict": "cosmetic",
+  "rule": "The account locks after 3 consecutive failed logins.",
+  "file": "src/auth/sessions.ts",
+  "symbol": "lockAfterFailures",
+  "old": "export function lockAfterFailures(failures: number): boolean {\n  // lock the account for safety\n  return failures >= 3;\n}",
+  "new": "export function lockAfterFailures(failures: number): boolean {\n  // brute-force guard: lock once too many attempts pile up\n  return failures >= 3;\n}"
+}

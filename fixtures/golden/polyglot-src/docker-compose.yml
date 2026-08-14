@@ -1,0 +1,7 @@
+services:
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+  db:
+    image: postgres:16

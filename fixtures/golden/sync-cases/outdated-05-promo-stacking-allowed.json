@@ -1,0 +1,10 @@
+{
+  "key": "outdated-05-promo-stacking-allowed",
+  "verdict": "rule-outdated",
+  "rule": "Promo codes cannot be stacked; only one applies per order.",
+  "file": "src/payments/discounts.ts",
+  "symbol": "checkPromoStacking",
+  "commit": "payments: allow stacking up to two promo codes per order",
+  "old": "export function checkPromoStacking(codes: string[]): boolean {\n  return codes.length <= 1;\n}",
+  "new": "export function checkPromoStacking(codes: string[]): boolean {\n  return codes.length <= 2;\n}"
+}

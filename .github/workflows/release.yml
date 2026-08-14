@@ -1,0 +1,77 @@
+# Build installers on a tag and attach them to a GitHub Release.
+#
+# Distribution is source-first: the supported way to run Alethic is `git clone && pnpm install &&
+# pnpm dev`, which needs none of this. These artifacts are a convenience, and they are UNSIGNED —
+# macOS Gatekeeper will refuse a downloaded .dmg until you right-click → Open (or clear the
+# quarantine attribute), and Windows SmartScreen will warn. Signing needs an Apple Developer
+# account and a Windows code-signing certificate; until those exist, the release notes have to say
+# so rather than let people think the app is broken.
+#
+# Trigger: push a tag matching the version in package.json, e.g. `git tag v0.1.0 && git push --tags`.
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write # required to create the release and upload assets
+
+jobs:
+  build:
+    name: build (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false # a broken mac build must not hide a working windows one
+      matrix:
+        os: [macos-latest, windows-latest]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - run: corepack enable
+        shell: bash
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22 # keep in step with ci.yml and `engines`
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # The gate runs here too: a tag that ships a red build is worse than a tag that never shipped.
+      - run: pnpm check
+
+      - run: pnpm dist
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: alethic-${{ matrix.os }}
+          path: |
+            apps/desktop/release/*.exe
+            apps/desktop/release/*.dmg
+            apps/desktop/release/*.zip
+          if-no-files-found: error # silence here would mean an empty release
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: artifacts/*
+          draft: true # published by hand, after someone has actually opened one of the builds
+          generate_release_notes: true
+          body: |
+            These builds are **unsigned**.
+
+            - **macOS** — Gatekeeper will block the app on first launch. Right-click the app →
+              *Open*, or run `xattr -d com.apple.quarantine /Applications/Alethic.app`.
+            - **Windows** — SmartScreen will warn. *More info* → *Run anyway*.
+
+            To avoid both, run from source: `git clone`, `pnpm install`, `pnpm dev`.

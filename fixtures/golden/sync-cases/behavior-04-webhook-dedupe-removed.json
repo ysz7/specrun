@@ -1,0 +1,9 @@
+{
+  "key": "behavior-04-webhook-dedupe-removed",
+  "verdict": "behavior-changed",
+  "rule": "Webhook re-delivery is suppressed within 24h by event.id.",
+  "file": "src/orders/tracking.ts",
+  "symbol": "dedupeWebhook",
+  "old": "export function dedupeWebhook(event: Event, seen: Map<string, number>): boolean {\n  const last = seen.get(event.id);\n  if (last && Date.now() - last < 24 * 3600_000) return false;\n  seen.set(event.id, Date.now());\n  return true;\n}",
+  "new": "export function dedupeWebhook(event: Event, seen: Map<string, number>): boolean {\n  seen.set(event.id, Date.now());\n  return true;\n}"
+}

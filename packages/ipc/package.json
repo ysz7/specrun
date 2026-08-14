@@ -1,0 +1,23 @@
+{
+  "name": "@alethic/ipc",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Typed channel contracts between main and renderer (invoke requests + event streams), zod payloads.",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@alethic/format": "workspace:*",
+    "zod": "^4.4.3"
+  }
+}

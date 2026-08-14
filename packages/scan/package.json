@@ -1,0 +1,23 @@
+{
+  "name": "@alethic/scan",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Language-independent repo map: file tree, tree-sitter tags, ecosystem manifests; symbol extraction.",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@alethic/format": "workspace:*",
+    "yaml": "^2.9.0"
+  }
+}

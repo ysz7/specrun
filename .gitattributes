@@ -1,0 +1,16 @@
+# Line endings are normalized to LF in the repository and in every working copy.
+#
+# Without this, a Windows checkout with core.autocrlf=true (the default on GitHub's Windows runners)
+# rewrites every file to CRLF, and the `.alethic/` fixtures stop parsing — which is exactly how CI
+# failed while the same commit was green on a Windows machine whose working copy still held LF.
+# The parser now tolerates CRLF on its own; this keeps the bytes consistent so diffs stay clean and
+# nobody debugs an invisible whitespace difference between two machines.
+* text=auto eol=lf
+
+# Binary — never touched, never diffed as text.
+*.png binary
+*.gif binary
+*.jpg binary
+*.ico binary
+*.icns binary
+*.wasm binary

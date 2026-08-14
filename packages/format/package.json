@@ -1,0 +1,30 @@
+{
+  "name": "@alethic/format",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "The .alethic/ format as code: zod schemas, status machine, anchors+hashes, index-builder, validator.",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "bin": {
+    "alethic-format": "./dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@noble/hashes": "^2.2.0",
+    "gray-matter": "^4.0.3",
+    "tree-sitter-wasms": "^0.1.13",
+    "web-tree-sitter": "^0.24.7",
+    "yaml": "^2.9.0",
+    "zod": "^4.4.3"
+  }
+}

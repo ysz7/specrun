@@ -1,0 +1,12 @@
+{
+  "$comment": "Hand-verified expected map for fixtures/golden/polyglot-src (Python + Dockerfile + compose, decision 53). The unit is a FEATURE (decision 56): one node per capability, listing the anchor symbols it is made of. Compose features anchor on key paths (format-spec §5.1). Dockerfile has no tree-sitter grammar yet (see backlog), so no Dockerfile-anchored features are expected.",
+  "src": "fixtures/golden/polyglot-src",
+  "domains": ["app", "infra"],
+  "rules": [
+    { "key": "pricing-an-order", "domain": "app", "anchors": ["apply_discount", "compute_tax"] },
+    { "key": "refunding-a-capture", "domain": "app", "anchors": ["process_refund"] },
+    { "key": "repeat-safe-refunds", "domain": "app", "anchors": ["refund_idempotency_key"] },
+    { "key": "database-service", "domain": "infra", "anchors": ["services.db.image"] }
+  ],
+  "traps": { "ruleBaitSymbols": [], "deadCodeSymbols": [] }
+}

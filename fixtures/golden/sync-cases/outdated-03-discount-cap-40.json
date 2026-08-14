@@ -1,0 +1,10 @@
+{
+  "key": "outdated-03-discount-cap-40",
+  "verdict": "rule-outdated",
+  "rule": "A discount is capped at 50% of the subtotal.",
+  "file": "src/payments/discounts.ts",
+  "symbol": "capDiscount",
+  "commit": "payments: lower the maximum discount from 50% to 40%",
+  "old": "export function capDiscount(discount: number, subtotal: number): number {\n  return Math.min(discount, subtotal * 0.5);\n}",
+  "new": "export function capDiscount(discount: number, subtotal: number): number {\n  return Math.min(discount, subtotal * 0.4);\n}"
+}

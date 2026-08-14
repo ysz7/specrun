@@ -1,0 +1,48 @@
+# The gate: `pnpm check` (build, test, lint, dep:check) on the platforms the app ships to.
+#
+# Alethic is a desktop app for developers — macOS and Windows, run from source. No Linux target, so
+# no Ubuntu runner: it would only catch bugs on a platform nobody ships to. What's still worth two
+# runners is that the most expensive past bugs were platform-specific (POSIX vs Windows paths, a
+# delete racing a file watcher). No model calls happen here: `pnpm test` is deterministic, and the
+# live scenarios (`pnpm dogfood`) are opt-in behind ALETHIC_DOGFOOD and stay out of CI on purpose.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# A new push supersedes the run still going for the same ref.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: check (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false # one platform failing must not hide the others
+      matrix:
+        os: [macos-latest, windows-latest]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # corepack takes the pnpm version from `packageManager` in package.json, so CI and every
+      # contributor's machine resolve the same one.
+      - run: corepack enable
+        shell: bash
+
+      - uses: actions/setup-node@v4
+        with:
+          # The floor declared in `engines`, so CI holds it rather than just documenting it. It is
+          # 22 because the pinned pnpm needs `node:sqlite` (Node >= 22.13) — on Node 20 corepack
+          # downloads pnpm and it dies before installing anything. Development happens on newer
+          # Node, so between them the supported range is exercised at both ends.
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm check

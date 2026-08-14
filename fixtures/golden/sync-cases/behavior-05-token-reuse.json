@@ -1,0 +1,9 @@
+{
+  "key": "behavior-05-token-reuse",
+  "verdict": "behavior-changed",
+  "rule": "A password-reset token can be consumed only once.",
+  "file": "src/auth/tokens.ts",
+  "symbol": "consumeToken",
+  "old": "export function consumeToken(token: Token): boolean {\n  if (token.used) return false;\n  token.used = true;\n  return true;\n}",
+  "new": "export function consumeToken(token: Token): boolean {\n  return true;\n}"
+}

@@ -1,0 +1,32 @@
+{
+  "$comment": "Hand-verified expected map for fixtures/golden/acme-commerce-src (agent-prompts-spec §7). The unit is a FEATURE (decision 56): each entry is one node of the map, listing the anchor symbols it is made of — a produced feature covers it by anchoring any of them. `features` is the count the map should land near; scoring flags fragmentation (a column of sentence-sized nodes) and titles that are assertions rather than names. Traps must never be anchored.",
+  "src": "fixtures/golden/acme-commerce-src",
+  "domains": ["payments", "auth", "orders"],
+  "rules": [
+    {
+      "key": "discounting-an-order",
+      "domain": "payments",
+      "anchors": ["applyDiscounts", "capDiscount", "computeTax"]
+    },
+    { "key": "promo-codes", "domain": "payments", "anchors": ["checkPromoStacking"] },
+    { "key": "refunding-a-capture", "domain": "payments", "anchors": ["processRefund"] },
+    { "key": "repeat-safe-refunds", "domain": "payments", "anchors": ["refundIdempotencyKey"] },
+    { "key": "user-sessions", "domain": "auth", "anchors": ["createSession"] },
+    { "key": "login-lockout", "domain": "auth", "anchors": ["lockAfterFailures"] },
+    { "key": "token-rotation", "domain": "auth", "anchors": ["rotateTokenOnPasswordChange"] },
+    { "key": "single-use-tokens", "domain": "auth", "anchors": ["consumeToken"] },
+    {
+      "key": "placing-an-order",
+      "domain": "orders",
+      "anchors": ["checkout", "checkoutIdempotencyKey"]
+    },
+    { "key": "order-totals", "domain": "orders", "anchors": ["orderTotal"] },
+    { "key": "webhook-delivery", "domain": "orders", "anchors": ["dedupeWebhook"] },
+    { "key": "shipment-tracking", "domain": "orders", "anchors": ["shipmentStatus"] }
+  ],
+  "traps": {
+    "ruleBaitSymbols": ["serializeDiscount", "cartStore"],
+    "deadCodeSymbols": ["legacyDiscount"],
+    "unnamedSymbols": true
+  }
+}
