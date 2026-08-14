@@ -51,3 +51,6 @@ include = ["src/specrun", "plugins/specrun", "tests", "README.md", "LICENSE"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+# So that the shared builders in tests/conftest.py can be imported as `tests.conftest` rather
+# than relying on where pytest happens to have been started from.
+pythonpath = ["."]

@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "content_version": "0.1.0",
+  "blueprints": [
+    {
+      "id": "agent-loop",
+      "path": "blueprints/agent-loop.md",
+      "title": "Agent loop",
+      "use_when": "Building the loop that calls a model, runs the tools it asks for and repeats until it stops; or an agent runs away, loops, or will not stop on its own",
+      "pack": "ai-agents",
+      "verified_at": "2026-08-12",
+      "stale_after": "90d"
+    },
+    {
+      "id": "rag-baseline",
+      "path": "blueprints/rag-baseline.md",
+      "title": "RAG baseline",
+      "use_when": "Answers have to come from a document corpus the model was not trained on, the corpus changes, or answers must cite their sources; retrieval is being set up, or the model hallucinates and cannot attribute what it says",
+      "pack": "ai-agents",
+      "verified_at": "2026-08-12",
+      "stale_after": "90d"
+    },
+    {
+      "id": "tool-design",
+      "path": "blueprints/tool-design.md",
+      "title": "Tool design",
+      "use_when": "An agent has more than one tool and picks the wrong one, sends malformed arguments, or misreads what a tool returned; tool schemas, descriptions and return shapes are being written or reworked",
+      "pack": "ai-agents",
+      "verified_at": "2026-08-12",
+      "stale_after": "90d"
+    }
+  ],
+  "skills": []
+}
