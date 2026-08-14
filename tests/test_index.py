@@ -9,7 +9,7 @@ from pathlib import Path
 import pytest
 
 from specrun.index import SCHEMA_VERSION, load_index
-from tests.conftest import write_index, write_local
+from tests.conftest import write_index, write_local, write_skill
 
 BUNDLED = [
     {
@@ -149,4 +149,31 @@ def test_an_index_from_a_newer_specrun_is_refused_rather_than_misread(
 
 def test_a_missing_index_says_how_it_is_generated(content_dir: Path, project: Path) -> None:
     with pytest.raises(FileNotFoundError, match="reindex"):
+        load_index(project, content_dir)
+
+
+def test_a_standalone_skill_travels_with_every_file_it_ships(
+    content_dir: Path, project: Path
+) -> None:
+    write_index(content_dir, BUNDLED, skills=["blueprint-author"])
+    write_skill(
+        content_dir,
+        "blueprint-author",
+        {"SKILL.md": "---\nname: blueprint-author\n---\n", "assets/template.md": "hi\n"},
+    )
+
+    index = load_index(project, content_dir)
+
+    (skill,) = index.skills
+    assert skill.name == "blueprint-author"
+    # A skill that ships a template and arrives without it is installed broken.
+    assert sorted(skill.files) == ["SKILL.md", "assets/template.md"]
+
+
+def test_a_skill_listed_but_not_packaged_is_an_error_not_an_empty_folder(
+    content_dir: Path, project: Path
+) -> None:
+    write_index(content_dir, BUNDLED, skills=["blueprint-author"])
+
+    with pytest.raises(FileNotFoundError, match="blueprint-author"):
         load_index(project, content_dir)

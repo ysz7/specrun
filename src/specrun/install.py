@@ -87,7 +87,7 @@ def install(
 ) -> Report:
     """Compile the index into `root`, respecting files that were edited by hand."""
     emit = EMITTERS[target]
-    generated = emit(index.blueprints)
+    generated = emit(index.blueprints, index.skills)
 
     previous = lockfile.read(root)
     report = Report(target=target)

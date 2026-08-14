@@ -1,0 +1,82 @@
+[
+  {
+    "query": "we just finished the billing webhook receiver — signature check, idempotency table, the lot. can you write that up as a blueprint so the next integration follows the same shape",
+    "should_trigger": true
+  },
+  {
+    "query": "record what we decided about the retry policy as a blueprint, including why we went with jitter instead of a flat backoff",
+    "should_trigger": true
+  },
+  {
+    "query": "the rag blueprint says to rerank before truncating, we did it the other way round for the contracts index and the eval scores came out better. the blueprint doesn't match what we actually do anymore",
+    "should_trigger": true
+  },
+  {
+    "query": "our tool-design blueprint was verified against sdk 0.40.x and we're on 0.6 now, half the schema advice in it doesn't apply. what do we do about that",
+    "should_trigger": true
+  },
+  {
+    "query": "make a blueprint out of the job queue we built this week",
+    "should_trigger": true
+  },
+  {
+    "query": "that agent-loop blueprint is well past its stale date and the code has moved on twice since. i want our own version of it that matches how we actually run agents here",
+    "should_trigger": true
+  },
+  {
+    "query": "we've built the second csv importer now and it came out almost identical to the first one. worth writing the pattern down somewhere the agent will pick it up?",
+    "should_trigger": true
+  },
+  {
+    "query": "i want new services in this repo to follow our conventions rather than the generic advice — how do i capture that so it gets followed automatically",
+    "should_trigger": true
+  },
+  {
+    "query": "please write the blueprint for the auth layer we just landed, ask me whatever you need about the parts that aren't obvious from the diff",
+    "should_trigger": true
+  },
+  {
+    "query": "add a local blueprint for how we do feature flags here — flag definitions in code, evaluation at the edge, cleanup after two releases",
+    "should_trigger": true
+  },
+  {
+    "query": "write a README for this repo — what it is, how to install it, the commands",
+    "should_trigger": false
+  },
+  {
+    "query": "add docstrings to the two functions we just changed in the parser",
+    "should_trigger": false
+  },
+  {
+    "query": "explain how the payment flow works in this codebase, i'm new here and trying to follow it end to end",
+    "should_trigger": false
+  },
+  {
+    "query": "build me an architecture map of this project, i want to see the top-level pieces and how they connect",
+    "should_trigger": false
+  },
+  {
+    "query": "i'm about to add retrieval over our support tickets. is there anything here i should be following for that?",
+    "should_trigger": false
+  },
+  {
+    "query": "update the changelog for the 2.3 release, group the entries by area",
+    "should_trigger": false
+  },
+  {
+    "query": "our contributing guide is well out of date — the setup steps still mention the old docker compose file. can you refresh it",
+    "should_trigger": false
+  },
+  {
+    "query": "before we build the notification service, write me a design doc for it: delivery guarantees, channels, what happens when a provider is down",
+    "should_trigger": false
+  },
+  {
+    "query": "we fixed the null check in the date parser and added a regression test. anything else needed before i commit?",
+    "should_trigger": false
+  },
+  {
+    "query": "write unit tests for the rate limiter module, the sliding window bit especially",
+    "should_trigger": false
+  }
+]

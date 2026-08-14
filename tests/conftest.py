@@ -45,7 +45,22 @@ def write_local(project: Path, name: str, header: str) -> Path:
     return path
 
 
-def write_index(content_dir: Path, entries: list[dict[str, object]], version: str = "0.1.0") -> Path:
+def write_skill(content_dir: Path, name: str, files: dict[str, str]) -> Path:
+    """A standalone skill folder in the content, such as `blueprint-author`."""
+    directory = content_dir / name
+    for relative, contents in files.items():
+        path = directory / relative
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(contents, encoding="utf-8")
+    return directory
+
+
+def write_index(
+    content_dir: Path,
+    entries: list[dict[str, object]],
+    version: str = "0.1.0",
+    skills: list[str] | None = None,
+) -> Path:
     path = content_dir / paths.BLUEPRINTS_SKILL_NAME / paths.INDEX_FILE_NAME
     path.write_text(
         json.dumps(
@@ -53,7 +68,7 @@ def write_index(content_dir: Path, entries: list[dict[str, object]], version: st
                 "schema_version": SCHEMA_VERSION,
                 "content_version": version,
                 "blueprints": entries,
-                "skills": [],
+                "skills": skills or [],
             },
             indent=2,
         ),

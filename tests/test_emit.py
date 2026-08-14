@@ -6,6 +6,7 @@ from pathlib import Path
 
 from specrun.emit import claude
 from specrun.frontmatter import parse
+from specrun.index import Skill
 from tests.conftest import blueprint_file
 
 BUNDLED = parse(
@@ -85,3 +86,26 @@ def test_paths_are_relative_and_posix() -> None:
     for path in claude.emit([]).keys():
         assert not path.startswith("/")
         assert "\\" not in path
+
+
+def test_a_standalone_skill_is_copied_beside_the_router_not_into_it() -> None:
+    skill = Skill(
+        name="blueprint-author",
+        files={"SKILL.md": "---\nname: blueprint-author\n---\n", "assets/x.md": "x\n"},
+    )
+
+    files = claude.emit([], [skill])
+
+    assert files[".claude/skills/blueprint-author/SKILL.md"] == skill.files["SKILL.md"]
+    assert files[".claude/skills/blueprint-author/assets/x.md"] == "x\n"
+    # It stands on its own description; the router must not offer it as if it were a blueprint.
+    assert "blueprint-author" not in claude.router([BUNDLED])
+
+
+def test_the_router_points_at_the_author_skill_only_when_it_is_installed() -> None:
+    author = Skill(name="blueprint-author", files={"SKILL.md": "---\nname: x\n---\n"})
+
+    # Disagreement with a blueprint surfaces while it is being followed, so the router is where
+    # the offer to record it belongs — but only where that skill is actually there to do it.
+    assert "blueprint-author" in claude.router([BUNDLED], [author])
+    assert "blueprint-author" not in claude.router([BUNDLED])

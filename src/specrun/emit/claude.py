@@ -18,6 +18,7 @@ from typing import Sequence
 
 from .. import paths
 from ..frontmatter import Blueprint
+from ..index import Skill
 
 #: The description is the whole triggering mechanism: Claude sees the skill's name and this text,
 #: and nothing else, when deciding whether to open it. `{topics}` is filled with the blueprints
@@ -43,19 +44,29 @@ def description(blueprints: Sequence[Blueprint]) -> str:
     return ROUTER_DESCRIPTION_TEMPLATE.format(topics=topics)
 
 
-def emit(blueprints: Sequence[Blueprint]) -> dict[str, str]:
-    """Blueprints in, `{relative path: contents}` out. Touches nothing."""
+def emit(blueprints: Sequence[Blueprint], skills: Sequence[Skill] = ()) -> dict[str, str]:
+    """Content in, `{relative path: contents}` out. Touches nothing.
+
+    Two kinds of thing come out. The router and the blueprints it offers are generated, because
+    the table and the description depend on which blueprints this project actually has. A
+    standalone skill such as `blueprint-author` is copied as it stands: it says the same thing in
+    every project, it is not chosen by the router, and it carries its own description — which is
+    the whole reason it is a skill of its own rather than another row in the table.
+    """
     files: dict[str, str] = {
-        str(paths.rel_skill_manifest(paths.BLUEPRINTS_SKILL_NAME)): router(blueprints)
+        str(paths.rel_skill_manifest(paths.BLUEPRINTS_SKILL_NAME)): router(blueprints, skills)
     }
     for blueprint in blueprints:
         files[str(paths.rel_blueprint_copy(blueprint.id))] = blueprint.path.read_text(
             encoding="utf-8"
         )
+    for skill in skills:
+        for relative, contents in skill.files.items():
+            files[str(paths.rel_skill_dir(skill.name) / relative)] = contents
     return files
 
 
-def router(blueprints: Sequence[Blueprint]) -> str:
+def router(blueprints: Sequence[Blueprint], skills: Sequence[Skill] = ()) -> str:
     """The skill that decides which blueprint, if any, fits the task in hand."""
     lines = [
         "---",
@@ -103,6 +114,24 @@ def router(blueprints: Sequence[Blueprint]) -> str:
         "something else for a reason — follow the code and say what disagreed, rather than",
         "reshaping working code to match a stale document.",
         "",
+    ]
+
+    # Disagreement with a blueprint is where a project's own knowledge shows up, and it shows up
+    # here — while the blueprint is being followed — not at the moment someone thinks to write
+    # one. Said right after the staleness paragraph and as a concrete offer, because a pointer at
+    # the end of the file reads as background and the finding then dies in one conversation.
+    if any(skill.name == paths.BLUEPRINT_AUTHOR_SKILL_NAME for skill in skills):
+        lines += [
+            "In any of those cases — the blueprint is past its own freshness date, the versions it",
+            "was checked against are not the ones installed, or this project did something else on",
+            "purpose and it worked — end by asking whether to write the project's own version of",
+            f"it. The `{paths.BLUEPRINT_AUTHOR_SKILL_NAME}` skill does that: it records what",
+            "differs and why, and leaves the original in place. Ask once and take a no as final;",
+            "unasked, the finding lasts as long as this conversation does.",
+            "",
+        ]
+
+    lines += [
         "Say which blueprint is being followed, and say where the implementation departs from it.",
         "The silent departure is the expensive one: the next person reads the blueprint and",
         "expects the code to match it.",

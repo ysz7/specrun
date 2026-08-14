@@ -10,7 +10,7 @@ from specrun import lock as lockfile
 from specrun import paths
 from specrun.index import load_index
 from specrun.install import Outcome, ensure_gitignore, install
-from tests.conftest import write_index, write_local
+from tests.conftest import write_index, write_local, write_skill
 
 BUNDLED = [
     {
@@ -202,3 +202,22 @@ def test_gitignore_is_not_written_twice(project: Path) -> None:
     assert ensure_gitignore(project) is False
     assert (project / ".gitignore").read_text(encoding="utf-8").count("map.html") == 1
     assert "node_modules/" in (project / ".gitignore").read_text(encoding="utf-8")
+
+
+def test_a_standalone_skill_is_installed_and_locked_like_anything_else(
+    project: Path, content: Path
+) -> None:
+    write_index(content, BUNDLED, skills=["blueprint-author"])
+    write_skill(content, "blueprint-author", {"SKILL.md": "---\nname: blueprint-author\n---\n"})
+    author = ".claude/skills/blueprint-author/SKILL.md"
+
+    report = run(project, content)
+
+    assert author in report.of(Outcome.CREATED)
+    assert (project / author).is_file()
+    # In the lock means the ownership rule covers it: hand edits survive, and `sync` can take it
+    # away again if it ever stops shipping.
+    assert author in [entry.path for entry in lockfile.read(project).files]
+
+    (project / author).write_text("edited by hand\n", encoding="utf-8")
+    assert author in run(project, content).edited_by_hand

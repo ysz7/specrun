@@ -30,5 +30,7 @@
       "stale_after": "90d"
     }
   ],
-  "skills": []
+  "skills": [
+    "blueprint-author"
+  ]
 }

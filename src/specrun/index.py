@@ -19,6 +19,7 @@ import json
 from dataclasses import dataclass, replace
 from datetime import date
 from pathlib import Path
+from typing import Mapping
 
 from . import paths
 from .content import content_root
@@ -26,6 +27,21 @@ from .frontmatter import Blueprint, BlueprintError, read
 
 #: Bumped when the shape of index.json changes in a way older readers cannot handle.
 SCHEMA_VERSION = 1
+
+
+@dataclass(frozen=True)
+class Skill:
+    """A skill that ships whole, as opposed to a blueprint the router offers.
+
+    Blueprints are content the router chooses between; a skill like `blueprint-author` is a tool
+    that stands on its own description and is installed beside the router, not listed by it. Its
+    files are carried here as text rather than as a path so that an emitter stays a function of
+    the content it is given and never reads the disk itself.
+    """
+
+    name: str
+    #: Path relative to the skill's own folder → contents. `SKILL.md`, plus whatever it ships with.
+    files: Mapping[str, str]
 
 
 @dataclass(frozen=True)
@@ -43,7 +59,8 @@ class Index:
 
     content_version: str
     blueprints: tuple[Blueprint, ...] = ()
-    skills: tuple[str, ...] = ()
+    #: Standalone skills that ship alongside the router, installed as they are.
+    skills: tuple[Skill, ...] = ()
     shadowed: tuple[Shadowing, ...] = ()
     #: Local files that could not be read. Kept rather than raised: one malformed blueprint in a
     #: project's own folder should not make every command fail, but it must not vanish either.
@@ -93,7 +110,7 @@ def load_index(project_root: Path, content_dir: Path | None = None) -> Index:
     )
 
 
-def read_bundled(root: Path) -> tuple[str, tuple[Blueprint, ...], tuple[str, ...]]:
+def read_bundled(root: Path) -> tuple[str, tuple[Blueprint, ...], tuple[Skill, ...]]:
     """Read the generated index that ships with the package."""
     index_path = bundled_index_path(root)
     if not index_path.is_file():
@@ -113,7 +130,33 @@ def read_bundled(root: Path) -> tuple[str, tuple[Blueprint, ...], tuple[str, ...
     blueprints = tuple(
         _blueprint_from_entry(entry, index_path.parent) for entry in data.get("blueprints", ())
     )
-    return str(data.get("content_version", "")), blueprints, tuple(data.get("skills", ()))
+    skills = tuple(read_skill(root, str(name)) for name in data.get("skills", ()))
+    return str(data.get("content_version", "")), blueprints, skills
+
+
+def read_skill(root: Path, name: str) -> Skill:
+    """Read one standalone skill folder out of the content at `root`.
+
+    Everything under the folder travels, not just `SKILL.md`: a skill that ships a template or a
+    licence file is broken by a copy that takes only its manifest. Files are read as text because
+    every file a skill carries is text — a binary asset would have to be handled here, and there
+    is no reason for a skill to grow one.
+    """
+    directory = root / name
+    manifest = directory / paths.SKILL_FILE_NAME
+    if not manifest.is_file():
+        raise FileNotFoundError(
+            f"{manifest} is missing, but {bundled_index_path(root)} lists {name!r} as a skill. "
+            "Either the skill folder was not packaged, or the index is out of date; "
+            "`python -m specrun.dev.reindex` rebuilds it."
+        )
+
+    files = {
+        path.relative_to(directory).as_posix(): path.read_text(encoding="utf-8")
+        for path in sorted(directory.rglob("*"))
+        if path.is_file()
+    }
+    return Skill(name=name, files=files)
 
 
 def read_local(project_root: Path) -> tuple[tuple[Blueprint, ...], tuple[str, ...]]:

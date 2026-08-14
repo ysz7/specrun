@@ -20,7 +20,7 @@ import sys
 from pathlib import Path
 from typing import Any, Sequence
 
-from .. import __version__
+from .. import __version__, paths
 from ..content import content_root
 from ..frontmatter import BlueprintError, read
 from ..index import SCHEMA_VERSION, bundled_blueprints_dir, bundled_index_path
@@ -63,8 +63,24 @@ def build(root: Path, content_version: str) -> dict[str, Any]:
         # Content ships inside the package, so the two versions move together by construction.
         "content_version": content_version,
         "blueprints": entries,
-        "skills": [],
+        "skills": standalone_skills(root),
     }
+
+
+def standalone_skills(root: Path) -> list[str]:
+    """Skill folders that ship as they are, found rather than listed.
+
+    The router skill is excluded: it is generated per project from the blueprints installed there,
+    so copying the repository's copy of it would install a table describing someone else's project.
+    Everything else with a `SKILL.md` is a skill in its own right and travels whole.
+    """
+    return sorted(
+        directory.name
+        for directory in root.iterdir()
+        if directory.is_dir()
+        and directory.name != paths.BLUEPRINTS_SKILL_NAME
+        and (directory / paths.SKILL_FILE_NAME).is_file()
+    )
 
 
 def render(index: dict[str, Any]) -> str:
@@ -104,8 +120,12 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(rendered, encoding="utf-8")
-    count = len(json.loads(rendered)["blueprints"])
-    print(f"reindex: wrote {target} ({count} blueprint{'s' if count != 1 else ''})")
+    written = json.loads(rendered)
+    count, skills = len(written["blueprints"]), len(written["skills"])
+    print(
+        f"reindex: wrote {target} ({count} blueprint{'s' if count != 1 else ''}, "
+        f"{skills} skill{'s' if skills != 1 else ''})"
+    )
     return 0
 
 
