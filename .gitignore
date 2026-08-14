@@ -39,3 +39,6 @@ Thumbs.db
 .agents
 CLAUDE.md
 PLAN.md
+
+# Specrun
+.specrun/map.html

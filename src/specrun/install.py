@@ -36,6 +36,8 @@ class Outcome(str, Enum):
     KEPT = "kept"
     #: Was edited, and `--force` was passed.
     OVERWRITTEN = "overwritten"
+    #: We wrote it once, the content no longer produces it, and it was still ours to delete.
+    REMOVED = "removed"
 
 
 @dataclass
@@ -62,7 +64,7 @@ class Report:
     def changed(self) -> bool:
         """Whether anything on disk actually moved."""
         return any(
-            f.outcome in (Outcome.CREATED, Outcome.UPDATED, Outcome.OVERWRITTEN)
+            f.outcome in (Outcome.CREATED, Outcome.UPDATED, Outcome.OVERWRITTEN, Outcome.REMOVED)
             for f in self.files
         )
 
@@ -105,6 +107,8 @@ def install(
         if digest is not None:
             entries.append(lockfile.LockedFile(path=relative, sha256=digest, target=target))
 
+    _remove_orphans(root, generated, previous, target, report)
+
     if update_gitignore:
         report.gitignore_updated = ensure_gitignore(root)
 
@@ -118,6 +122,41 @@ def install(
         ),
     )
     return report
+
+
+def _remove_orphans(
+    root: Path,
+    generated: dict[str, str],
+    previous: lockfile.Lock | None,
+    target: str,
+    report: Report,
+) -> None:
+    """Take away the files this content no longer produces.
+
+    Delete a local blueprint and the router stops listing it, but its installed copy would sit
+    next to the router forever — a blueprint the agent can still open and nothing points at. So a
+    file we wrote, still own, and no longer generate is removed.
+
+    A file that was edited after we wrote it is a different matter: we have no claim on it any
+    more, so it is left where it is, reported, and dropped from the lock. From here on it belongs
+    to whoever edited it.
+    """
+    if previous is None:
+        return
+
+    for recorded in previous.files:
+        if recorded.path in generated or recorded.target != target:
+            continue
+
+        path = root / recorded.path
+        if not path.is_file():
+            continue
+
+        if lockfile.sha256(path.read_text(encoding="utf-8")) == recorded.sha256:
+            path.unlink()
+            report.files.append(FileResult(path=recorded.path, outcome=Outcome.REMOVED))
+        else:
+            report.files.append(FileResult(path=recorded.path, outcome=Outcome.KEPT))
 
 
 def _decide(

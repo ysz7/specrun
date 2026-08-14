@@ -137,6 +137,39 @@ def test_local_blueprints_are_installed_alongside_bundled_ones(
     assert "house-style" in (project / ROUTER).read_text(encoding="utf-8")
 
 
+def test_a_file_we_no_longer_generate_and_still_own_is_taken_away(
+    project: Path, content: Path
+) -> None:
+    write_local(project, "house-style", LOCAL)
+    run(project, content)
+    installed = project / ".claude/skills/blueprints/blueprints/house-style.md"
+    assert installed.is_file()
+
+    paths.local_blueprints_dir(project).joinpath("house-style.md").unlink()
+    report = run(project, content)
+
+    relative = installed.relative_to(project).as_posix()
+    assert report.of(Outcome.REMOVED) == [relative]
+    assert not installed.exists()
+    assert lockfile.read(project).get(relative) is None
+
+
+def test_an_orphan_that_was_edited_is_left_where_it_is(project: Path, content: Path) -> None:
+    write_local(project, "house-style", LOCAL)
+    run(project, content)
+    installed = project / ".claude/skills/blueprints/blueprints/house-style.md"
+    installed.write_text("mine now\n", encoding="utf-8")
+
+    paths.local_blueprints_dir(project).joinpath("house-style.md").unlink()
+    report = run(project, content)
+
+    # We have no claim on it any more, so it stays — and stops being ours to track.
+    relative = installed.relative_to(project).as_posix()
+    assert report.edited_by_hand == [relative]
+    assert installed.read_text(encoding="utf-8") == "mine now\n"
+    assert lockfile.read(project).get(relative) is None
+
+
 def test_the_lock_records_every_file_and_the_versions_that_produced_it(
     project: Path, content: Path
 ) -> None:

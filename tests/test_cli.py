@@ -20,7 +20,10 @@ def test_no_command_prints_help(capsys: pytest.CaptureFixture[str]) -> None:
     assert "usage: specrun" in capsys.readouterr().out
 
 
-@pytest.mark.parametrize("command", [c for c in COMMANDS if c != "init"])
+IMPLEMENTED = ("init", "sync", "status")
+
+
+@pytest.mark.parametrize("command", [c for c in COMMANDS if c not in IMPLEMENTED])
 def test_stub_commands_fail_loudly(
     command: str, capsys: pytest.CaptureFixture[str]
 ) -> None:

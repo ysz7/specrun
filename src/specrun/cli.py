@@ -17,11 +17,23 @@ from typing import Sequence
 from . import __version__
 from .content import ContentNotFound
 from .detect import Project, detect
-from .emit import DEFAULT_TARGET
 from .index import Index, load_index
 from .install import Outcome, Report, install
+from .status import FileState, Status, status
 
 COMMANDS = ("init", "sync", "status", "scan")
+
+
+class CommandError(Exception):
+    """Something the developer has to fix before the command can do its job.
+
+    Carries its own exit code so that a command reads as a straight line of work rather than as a
+    chain of `if isinstance(result, int)` checks around every step that might fail.
+    """
+
+    def __init__(self, message: str, code: int = 1) -> None:
+        super().__init__(message)
+        self.code = code
 
 
 @dataclass(frozen=True)
@@ -57,7 +69,14 @@ def _build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="overwrite files that were edited by hand",
     )
-    subcommands.add_parser("sync", help="regenerate what init installed, keeping manual edits")
+    sync = subcommands.add_parser(
+        "sync", help="regenerate what init installed, keeping manual edits"
+    )
+    sync.add_argument(
+        "--force",
+        action="store_true",
+        help="overwrite files that were edited by hand",
+    )
     subcommands.add_parser("status", help="what is installed, what is stale, what was edited")
     subcommands.add_parser("scan", help="read facts about this repository")
     return parser
@@ -73,61 +92,93 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     context = Context(root=Path(args.cwd).resolve(), quiet=args.quiet, json=args.json)
 
-    if args.command == "init":
-        return cmd_init(context, force=args.force)
+    try:
+        if args.command == "init":
+            return cmd_init(context, force=args.force)
+        if args.command == "sync":
+            return cmd_sync(context, force=args.force)
+        if args.command == "status":
+            return cmd_status(context)
+    except CommandError as error:
+        print(f"specrun {args.command}: {error}", file=sys.stderr)
+        return error.code
     return _not_implemented(args.command)
 
 
 def cmd_init(context: Context, force: bool = False) -> int:
     """Look at the project, compile the content into it, and say what happened."""
-    if not context.root.is_dir():
-        print(f"specrun: {context.root} is not a directory", file=sys.stderr)
-        return 2
-
+    _require_directory(context.root)
     project = detect(context.root)
-    try:
-        index = load_index(context.root)
-    except (ContentNotFound, FileNotFoundError, ValueError) as error:
-        print(f"specrun init: {error}", file=sys.stderr)
-        return 1
+    index = _load_index(context.root)
 
     report = install(context.root, index, specrun_version=__version__, force=force)
 
     if context.json:
-        print(
-            json.dumps(
-                {
-                    "specrun_version": __version__,
-                    "content_version": index.content_version,
-                    "project": {
-                        "root": str(project.root),
-                        "stacks": list(project.stacks),
-                        "has_tests": project.has_tests,
-                        "has_agent_dir": project.has_agent_dir,
-                    },
-                    "blueprints": {
-                        "bundled": len(index.bundled),
-                        "local": len(index.local),
-                    },
-                    **report.to_dict(),
-                },
-                indent=2,
-            )
-        )
+        print(json.dumps(_compilation_json(index, report, project), indent=2))
     else:
-        _print_init_summary(project, index, report, context.quiet)
+        _print_compilation(index, report, context.quiet, project)
 
     return 0
 
 
-def _print_init_summary(project: Project, index: Index, report: Report, quiet: bool) -> None:
+def cmd_sync(context: Context, force: bool = False) -> int:
+    """Compile the content into the project again — the same work as `init`, minus the looking.
+
+    `init` asks what kind of project this is because it is meeting it for the first time. `sync`
+    already knows, and is here for the two moments when the answer has moved: the package was
+    upgraded, or the project wrote a blueprint of its own. Both are the same job — read everything
+    again, regenerate, and leave hand-edited files alone.
+    """
+    _require_directory(context.root)
+    index = _load_index(context.root)
+
+    report = install(context.root, index, specrun_version=__version__, force=force)
+
+    if context.json:
+        print(json.dumps(_compilation_json(index, report), indent=2))
+    else:
+        _print_compilation(index, report, context.quiet)
+
+    return 0
+
+
+def _compilation_json(index: Index, report: Report, project: Project | None = None) -> dict:
+    data: dict = {
+        "specrun_version": __version__,
+        "content_version": index.content_version,
+        "blueprints": {"bundled": len(index.bundled), "local": len(index.local)},
+        "shadowed": [s.id for s in index.shadowed],
+        "problems": list(index.problems),
+        **report.to_dict(),
+    }
+    if project is not None:
+        data["project"] = {
+            "root": str(project.root),
+            "stacks": list(project.stacks),
+            "has_tests": project.has_tests,
+            "has_agent_dir": project.has_agent_dir,
+        }
+    return data
+
+
+def _print_compilation(
+    index: Index, report: Report, quiet: bool, project: Project | None = None
+) -> None:
+    """The summary `init` and `sync` share, since they did the same work.
+
+    Only the opening differs: `init` says what it found the project to be, because that is the
+    question it just answered and the one a first-time reader wants confirmed.
+    """
     edited = report.edited_by_hand
 
     if not quiet:
-        described = ", ".join(filter(None, [project.stack, "tests" if project.has_tests else ""]))
         print(f"specrun {__version__} · content {index.content_version}")
-        print(f"project: {project.root} ({described})")
-        print(f"target: {DEFAULT_TARGET}")
+        if project is not None:
+            described = ", ".join(
+                filter(None, [project.stack, "tests" if project.has_tests else ""])
+            )
+            print(f"project: {project.root} ({described})")
+        print(f"target: {report.target}")
         print()
         print(f"blueprints: {len(index.bundled)} bundled, {len(index.local)} local")
         for shadowing in index.shadowed:
@@ -136,6 +187,8 @@ def _print_init_summary(project: Project, index: Index, report: Report, quiet: b
         for result in report.files:
             if result.outcome is not Outcome.KEPT:
                 print(f"  {result.outcome.value:<11} {result.path}")
+        if not report.changed and not edited:
+            print("  everything already up to date")
 
     for path in edited:
         # Printed even under --quiet: this is the one outcome the developer has to act on.
@@ -152,6 +205,107 @@ def _print_init_summary(project: Project, index: Index, report: Report, quiet: b
             print("updated .gitignore")
         if edited:
             print(f"{len(edited)} file(s) left alone. Pass --force to overwrite them.")
+
+
+def cmd_status(context: Context) -> int:
+    """Report what is installed here without changing any of it."""
+    _require_directory(context.root)
+
+    # An unreadable content root is worth reporting rather than dying on: the file list comes from
+    # the lock and is exactly what someone diagnosing a broken install needs to see.
+    try:
+        index: Index | None = load_index(context.root)
+    except (ContentNotFound, FileNotFoundError, ValueError) as error:
+        index = None
+        content_problem: str | None = str(error)
+    else:
+        content_problem = None
+
+    report = status(context.root, index)
+
+    if context.json:
+        data = report.to_dict()
+        if content_problem:
+            data["problems"] = [*data["problems"], content_problem]
+        print(json.dumps(data, indent=2))
+        return 0
+
+    _print_status(report, content_problem, context.quiet)
+    return 0 if report.installed else 1
+
+
+def _print_status(report: Status, content_problem: str | None, quiet: bool) -> None:
+    if not report.installed:
+        print("specrun is not installed in this project. Run `specrun init` to install it.")
+        if content_problem:
+            print(f"  problem     {content_problem}", file=sys.stderr)
+        return
+
+    if not quiet:
+        print(f"specrun {report.specrun_version} · content {report.content_version}")
+        print(f"target: {', '.join(report.targets) or 'none recorded'}")
+        if report.content_is_behind:
+            print(
+                f"content {report.available_content_version} is available — run `specrun sync`"
+            )
+        print()
+        print(f"blueprints: {len(report.bundled)} bundled, {len(report.local)} local")
+
+    for blueprint in report.blueprints:
+        # A bundled blueprint with nothing wrong with it is already covered by the count above.
+        # Everything a project cannot see from the package alone — its own blueprints, the ones
+        # they displaced, and anything past its own freshness deadline — gets a line of its own.
+        notes = []
+        if blueprint.shadows:
+            notes.append("local, overriding the bundled version")
+        elif blueprint.origin == "local":
+            notes.append("local")
+        if blueprint.stale:
+            notes.append(
+                f"stale (verified_at {blueprint.verified_at}, "
+                f"stale_after {blueprint.stale_after})"
+            )
+        if notes:
+            print(f"  {'!' if blueprint.stale else '·'} {blueprint.id} — {'; '.join(notes)}")
+
+    edited = report.of(FileState.EDITED)
+    missing = report.of(FileState.MISSING)
+
+    if not quiet:
+        print()
+        counted = ", ".join(
+            filter(
+                None,
+                [
+                    f"{len(report.files)}",
+                    f"{len(edited)} edited manually" if edited else "",
+                    f"{len(missing)} missing" if missing else "",
+                ],
+            )
+        )
+        print(f"files: {counted}")
+
+    for file in edited:
+        print(f"  ~ {file.path}")
+    for file in missing:
+        print(f"  ? {file.path} — gone; `specrun sync` writes it again")
+
+    for problem in report.problems:
+        print(f"  problem     {problem}", file=sys.stderr)
+    if content_problem:
+        print(f"  problem     {content_problem}", file=sys.stderr)
+
+
+def _require_directory(root: Path) -> None:
+    if not root.is_dir():
+        raise CommandError(f"{root} is not a directory", code=2)
+
+
+def _load_index(root: Path) -> Index:
+    try:
+        return load_index(root)
+    except (ContentNotFound, FileNotFoundError, ValueError) as error:
+        raise CommandError(str(error)) from error
 
 
 def _not_implemented(command: str) -> int:
