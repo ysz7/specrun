@@ -36,5 +36,6 @@ Thumbs.db
 
 # local, kept out of the repo by project preference
 .claude
+.agents
 CLAUDE.md
 PLAN.md

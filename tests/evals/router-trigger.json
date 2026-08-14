@@ -1,0 +1,82 @@
+[
+  {
+    "query": "we're adding a \"ask our docs\" panel to the admin app. about 4k markdown files in a docs/ repo plus some confluence exports. i need the answers to link back to the source page. where do i even start with the indexing side of this",
+    "should_trigger": true
+  },
+  {
+    "query": "our support bot keeps making up policy details. the policies ARE in the corpus, i checked, but it answers from memory instead of the retrieved chunks. what's the right way to restructure this",
+    "should_trigger": true
+  },
+  {
+    "query": "Planning a feature where users can ask questions over uploaded PDFs (contracts mostly). Need citations back to page numbers. Before I write anything — what's our approach for this kind of thing?",
+    "should_trigger": true
+  },
+  {
+    "query": "im building the agent that reconciles invoices. got the anthropic sdk set up and a couple of tools defined but i dont have the actual loop yet — the bit that calls the model, runs whatever tool it asked for, feeds the result back. how should that be structured",
+    "should_trigger": true
+  },
+  {
+    "query": "the ops agent went into a spin last night, called search_orders 40 times in a row with basically the same args and burned through the budget before anyone noticed. need to fix the loop properly not just slap a counter on it",
+    "should_trigger": true
+  },
+  {
+    "query": "adding two new tools to our scheduling agent (reschedule_appointment and cancel_appointment). it already confuses book vs reschedule about a third of the time so i want to get the schemas right this time rather than iterate on the prompt",
+    "should_trigger": true
+  },
+  {
+    "query": "our agent keeps passing user_id where it should pass account_id and then gets a 404 back and just... tries again with the same thing. i think the tool definitions are the problem",
+    "should_trigger": true
+  },
+  {
+    "query": "starting work on the research agent this sprint - it needs to run for a while, call a handful of tools, and stop on its own when it has enough. what's the shape we use for that here",
+    "should_trigger": true
+  },
+  {
+    "query": "search over our knowledge base returns garbage for anything with an error code in it (like ERR_4021). semantic search just doesn't get exact tokens. rethinking the retrieval side before i add more hacks",
+    "should_trigger": true
+  },
+  {
+    "query": "i inherited this agent and the tool descriptions are one-liners like \"gets data\". before i touch the model or the prompt i want to redo the whole agent-computer interface properly. is there a standard we follow",
+    "should_trigger": true
+  },
+  {
+    "query": "our system prompt for the triage assistant is 900 lines and nobody knows what half of it does. i want to rewrite it from scratch — tone, format rules, the escalation policy. any structure you'd suggest",
+    "should_trigger": false
+  },
+  {
+    "query": "need to put together a labelled eval set for the classifier before we ship. maybe 200 examples, and i want an llm judge scoring them so we can compare runs. how do i keep the judge honest",
+    "should_trigger": false
+  },
+  {
+    "query": "writing an MCP server that exposes our postgres read replica to claude desktop. stateless transport per the new spec. what does the server side need to implement",
+    "should_trigger": false
+  },
+  {
+    "query": "our anthropic bill went from $400 to $3100 last month and i can't tell which feature did it. want per-feature token accounting and some kind of alert before it happens again",
+    "should_trigger": false
+  },
+  {
+    "query": "prompt caching isn't hitting for us — cache_read_input_tokens is basically always zero even though the first 6k tokens of every request are identical. what am i doing wrong with the cache_control blocks",
+    "should_trigger": false
+  },
+  {
+    "query": "a customer says the assistant told them something wrong on tuesday and i have no way to pull up that conversation and see what happened. need proper tracing on the llm calls",
+    "should_trigger": false
+  },
+  {
+    "query": "the assistant should remember that a user prefers metric units, across sessions, without me stuffing everything into every request. what's the storage model for that",
+    "should_trigger": false
+  },
+  {
+    "query": "add a POST /api/v2/invoices endpoint to the fastapi service, validates the payload, writes to postgres, returns 201 with the created record. standard stuff, just want it consistent with the rest of the routes",
+    "should_trigger": false
+  },
+  {
+    "query": "test_reconcile_totals fails maybe one run in six on CI and never locally. i think it's a fixture ordering thing but i've been staring at it for an hour",
+    "should_trigger": false
+  },
+  {
+    "query": "the frontend needs to show what the agent is doing while it works — which tool it's on, partial output, that kind of thing. currently the user stares at a spinner for 40 seconds",
+    "should_trigger": false
+  }
+]

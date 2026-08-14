@@ -9,7 +9,7 @@ Names are constants, locations are functions of a project root. Nothing here tou
 
 from __future__ import annotations
 
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 
 # --- the package's own content -------------------------------------------------------------
 
@@ -81,3 +81,24 @@ def map_path(root: Path) -> Path:
 def claude_skills_dir(root: Path) -> Path:
     """Where the Claude Code emitter installs compiled skills."""
     return root / CLAUDE_DIR_NAME / SKILLS_DIR_NAME
+
+
+# --- what an emitter produces ---------------------------------------------------------------
+#
+# Relative, POSIX, and rooted at the project: these are the keys of an emitter's output and the
+# paths recorded in the lock, so they have to be the same string on every machine.
+
+
+def rel_skill_dir(skill_name: str) -> PurePosixPath:
+    """`.claude/skills/<skill>` — one installed skill."""
+    return PurePosixPath(CLAUDE_DIR_NAME) / SKILLS_DIR_NAME / skill_name
+
+
+def rel_skill_manifest(skill_name: str) -> PurePosixPath:
+    """`.claude/skills/<skill>/SKILL.md`."""
+    return rel_skill_dir(skill_name) / SKILL_FILE_NAME
+
+
+def rel_blueprint_copy(blueprint_id: str) -> PurePosixPath:
+    """A blueprint installed next to the router that offers it."""
+    return rel_skill_dir(BLUEPRINTS_SKILL_NAME) / BLUEPRINTS_DIR_NAME / f"{blueprint_id}.md"

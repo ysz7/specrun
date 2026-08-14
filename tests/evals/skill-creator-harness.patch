@@ -1,0 +1,187 @@
+--- a/scripts/run_eval.py
++++ b/scripts/run_eval.py
+@@ -9,8 +9,10 @@
+ import json
+ import os
+ import select
++import shutil
+ import subprocess
+ import sys
++import tempfile
+ import time
+ import uuid
+ from concurrent.futures import ProcessPoolExecutor, as_completed
+@@ -50,15 +52,31 @@
+     """
+     unique_id = uuid.uuid4().hex[:8]
+     clean_name = f"{skill_name}-skill-{unique_id}"
+-    project_commands_dir = Path(project_root) / ".claude" / "commands"
+-    command_file = project_commands_dir / f"{clean_name}.md"
++    # PATCHED LOCALLY (1): install a real skill, not a slash command. Commands in .claude/commands/
++    # are invoked by the user, not offered to the model, so the original mechanism measured a
++    # trigger rate of zero for every query regardless of the description.
++    #
++    # PATCHED LOCALLY (2): run each query in a throwaway project of its own. Writing the skill into
++    # the shared project root means every worker's copy is visible to every other worker's query —
++    # with N workers the model chooses between N identically-described skills and this run's own
++    # name comes up about one time in N, so the measured trigger rate reads as ~1/N of the truth.
++    sandbox = Path(tempfile.mkdtemp(prefix="skill-eval-"))
++    skill_dir = sandbox / ".claude" / "skills" / clean_name
++    command_file = skill_dir / "SKILL.md"
+ 
+     try:
+-        project_commands_dir.mkdir(parents=True, exist_ok=True)
++        skill_dir.mkdir(parents=True, exist_ok=True)
++        # Carry over the project's top-level files (pyproject.toml and the like) so the query lands
++        # in something that still looks like the project. Directories are skipped: none of them
++        # affect which skills are offered, and copying a real repo per query would be ruinous.
++        for entry in Path(project_root).iterdir():
++            if entry.is_file() and not entry.name.startswith("."):
++                shutil.copy2(entry, sandbox / entry.name)
+         # Use YAML block scalar to avoid breaking on quotes in description
+         indented_desc = "\n  ".join(skill_description.split("\n"))
+         command_content = (
+             f"---\n"
++            f"name: {clean_name}\n"
+             f"description: |\n"
+             f"  {indented_desc}\n"
+             f"---\n\n"
+@@ -86,7 +104,7 @@
+             cmd,
+             stdout=subprocess.PIPE,
+             stderr=subprocess.DEVNULL,
+-            cwd=project_root,
++            cwd=str(sandbox),
+             env=env,
+         )
+ 
+@@ -177,8 +195,7 @@
+ 
+         return triggered
+     finally:
+-        if command_file.exists():
+-            command_file.unlink()
++        shutil.rmtree(sandbox, ignore_errors=True)
+ 
+ 
+ def run_eval(
+--- a/scripts/run_loop.py
++++ b/scripts/run_loop.py
+@@ -196,16 +196,25 @@
+             {k: v for k, v in h.items() if not k.startswith("test_")}
+             for h in history
+         ]
+-        new_description = improve_description(
+-            skill_name=name,
+-            skill_content=content,
+-            current_description=current_description,
+-            eval_results=train_results,
+-            history=blinded_history,
+-            model=model,
+-            log_dir=log_dir,
+-            iteration=iteration,
+-        )
++        # PATCHED LOCALLY: a failed improvement step ends the loop, it does not destroy it. Every
++        # iteration already behind us cost a full eval pass; raising here used to discard all of
++        # them along with the best description found so far.
++        try:
++            new_description = improve_description(
++                skill_name=name,
++                skill_content=content,
++                current_description=current_description,
++                eval_results=train_results,
++                history=blinded_history,
++                model=model,
++                log_dir=log_dir,
++                iteration=iteration,
++            )
++        except Exception as exc:
++            exit_reason = f"improvement_failed (iteration {iteration}): {exc}"
++            print(f"\nImprovement step failed: {exc}", file=sys.stderr)
++            print("Keeping the best description measured so far.", file=sys.stderr)
++            break
+         improve_elapsed = time.time() - t0
+ 
+         if verbose:
+--- a/scripts/improve_description.py
++++ b/scripts/improve_description.py
+@@ -12,16 +12,24 @@
+ import re
+ import subprocess
+ import sys
++import time
+ from pathlib import Path
+ 
+ from scripts.utils import parse_skill_md
+ 
+ 
+-def _call_claude(prompt: str, model: str | None, timeout: int = 300) -> str:
++def _call_claude(
++    prompt: str, model: str | None, timeout: int = 300, attempts: int = 4
++) -> str:
+     """Run `claude -p` with the prompt on stdin and return the text response.
+ 
+     Prompt goes over stdin (not argv) because it embeds the full SKILL.md
+     body and can easily exceed comfortable argv length.
++
++    PATCHED LOCALLY: retried, and the diagnostics widened. This call sits between two eval
++    passes that cost several hundred model calls each, so a single transient non-zero exit
++    used to throw the whole run away. `claude -p` also reports some failures on stdout with
++    an empty stderr, which made the old message read as an error with no cause at all.
+     """
+     cmd = ["claude", "-p", "--output-format", "text"]
+     if model:
+@@ -32,21 +40,40 @@
+     # programmatic subprocess usage is safe. Same pattern as run_eval.py.
+     env = {k: v for k, v in os.environ.items() if k != "CLAUDECODE"}
+ 
+-    result = subprocess.run(
+-        cmd,
+-        input=prompt,
+-        capture_output=True,
+-        text=True,
+-        env=env,
+-        timeout=timeout,
+-    )
+-    if result.returncode != 0:
+-        raise RuntimeError(
+-            f"claude -p exited {result.returncode}\nstderr: {result.stderr}"
+-        )
+-    return result.stdout
++    last_error = ""
++    for attempt in range(1, attempts + 1):
++        try:
++            result = subprocess.run(
++                cmd,
++                input=prompt,
++                capture_output=True,
++                text=True,
++                env=env,
++                timeout=timeout,
++            )
++        except subprocess.TimeoutExpired:
++            last_error = f"timed out after {timeout}s"
++        else:
++            if result.returncode == 0 and result.stdout.strip():
++                return result.stdout
++            last_error = (
++                f"exited {result.returncode}\n"
++                f"stdout: {result.stdout[-2000:]}\n"
++                f"stderr: {result.stderr[-2000:]}"
++            )
+ 
++        if attempt < attempts:
++            delay = 5 * 2 ** (attempt - 1)
++            print(
++                f"  claude -p attempt {attempt}/{attempts} failed ({last_error.splitlines()[0]}), "
++                f"retrying in {delay}s",
++                file=sys.stderr,
++            )
++            time.sleep(delay)
+ 
++    raise RuntimeError(f"claude -p failed {attempts} times; last: {last_error}")
++
++
+ def improve_description(
+     skill_name: str,
+     skill_content: str,
