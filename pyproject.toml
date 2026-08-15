@@ -26,6 +26,13 @@ classifiers = [
   "Topic :: Software Development :: Documentation",
 ]
 
+# The links on the PyPI page. Without them the page is a wall of text with no way back to the
+# repository, which is where the blueprints, the issues and the marketplace all are.
+[project.urls]
+Homepage = "https://github.com/ysz7/specrun"
+Repository = "https://github.com/ysz7/specrun"
+Issues = "https://github.com/ysz7/specrun/issues"
+
 [project.scripts]
 specrun = "specrun.cli:main"
 
