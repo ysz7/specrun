@@ -11,7 +11,7 @@ from specrun import lock as lockfile
 from specrun.index import load_index
 from specrun.install import install
 from specrun.status import FileState, status
-from tests.conftest import write_index, write_local
+from tests.conftest import write_index, write_local, write_skill
 
 ROUTER = ".claude/skills/blueprints/SKILL.md"
 COPY = ".claude/skills/blueprints/blueprints/rag-baseline.md"
@@ -175,6 +175,24 @@ def test_status_still_answers_when_the_content_is_unreadable(
     assert report.installed is True
     assert sorted(f.path for f in report.files) == sorted([ROUTER, COPY])
     assert report.blueprints == ()
+
+
+def test_installed_skills_are_named(project: Path, content: Path) -> None:
+    # A skill is the one thing installed here that nothing else names: the router's table lists
+    # blueprints only, and a skill either announces itself in chat or stays invisible.
+    write_index(content, BUNDLED, skills=["map"])
+    write_skill(
+        content,
+        "map",
+        {"SKILL.md": "---\nname: map\n---\n", "assets/template.html": "<svg/>\n"},
+    )
+    installed(project, content)
+
+    report = read(project, content)
+
+    assert report.skills == ("map",)
+    assert report.to_dict()["skills"] == ["map"]
+    assert ".claude/skills/map/assets/template.html" in [f.path for f in report.files]
 
 
 def test_status_writes_nothing(project: Path, content: Path) -> None:

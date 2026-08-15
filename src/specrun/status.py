@@ -80,6 +80,12 @@ class Status:
     available_content_version: str = ""
     targets: tuple[str, ...] = ()
     blueprints: tuple[BlueprintStatus, ...] = ()
+    #: Standalone skills the content installs beside the router, by name. Read from the index
+    #: rather than from the lock: the lock records paths, and working out which skill a path
+    #: belongs to would put the emitter's layout back into a module that has no business knowing
+    #: it. A skill installed but no longer shipped shows up the way any other stale file does —
+    #: as a line in `files`.
+    skills: tuple[str, ...] = ()
     files: tuple[FileStatus, ...] = ()
     #: Local blueprints that could not be read, and anything else worth saying aloud.
     problems: tuple[str, ...] = ()
@@ -121,6 +127,7 @@ class Status:
             "content_is_behind": self.content_is_behind,
             "targets": list(self.targets),
             "blueprints": [b.to_dict() for b in self.blueprints],
+            "skills": list(self.skills),
             "files": [f.to_dict() for f in self.files],
             "problems": list(self.problems),
         }
@@ -149,6 +156,7 @@ def status(root: Path, index: Index | None, today: date | None = None) -> Status
         available_content_version=index.content_version if index else "",
         targets=lock.targets,
         blueprints=_blueprints(index, moment),
+        skills=tuple(skill.name for skill in index.skills) if index else (),
         files=tuple(_file_status(root, entry) for entry in sorted(lock.files, key=lambda f: f.path)),
         problems=index.problems if index else (),
     )

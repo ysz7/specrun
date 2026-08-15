@@ -282,6 +282,11 @@ def _print_status(report: Status, content_problem: str | None, quiet: bool) -> N
             )
         print()
         print(f"blueprints: {len(report.bundled)} bundled, {len(report.local)} local")
+        # The skills are the other half of what was installed, and unlike the blueprints they are
+        # not listed anywhere the developer can see: the router's table names blueprints only, and
+        # a skill announces itself in chat or not at all. So it is named here, or nowhere.
+        if report.skills:
+            print(f"skills: {', '.join(report.skills)}")
 
     for blueprint in report.blueprints:
         # A bundled blueprint with nothing wrong with it is already covered by the count above.
