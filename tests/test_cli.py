@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import json
+from pathlib import Path
+
 import pytest
 
 from specrun import __version__
@@ -20,16 +23,22 @@ def test_no_command_prints_help(capsys: pytest.CaptureFixture[str]) -> None:
     assert "usage: specrun" in capsys.readouterr().out
 
 
-IMPLEMENTED = ("init", "sync", "status")
-
-
-@pytest.mark.parametrize("command", [c for c in COMMANDS if c not in IMPLEMENTED])
-def test_stub_commands_fail_loudly(
-    command: str, capsys: pytest.CaptureFixture[str]
+@pytest.mark.parametrize("command", COMMANDS)
+def test_every_command_is_routed(
+    command: str, project: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    # A stub that exited zero would tell a script it had succeeded.
-    assert main([command]) == 1
-    assert "not implemented" in capsys.readouterr().err
+    # `main` falls through to a "not implemented" message for anything it does not dispatch, so a
+    # command listed but never wired up says so out loud instead of quietly doing nothing.
+    main([command, "--cwd", str(project)])
+    assert "not implemented" not in capsys.readouterr().err
+
+
+@pytest.mark.parametrize("argv", [["scan", "--json"], ["--json", "scan"]])
+def test_global_flags_are_accepted_on_either_side_of_the_command(
+    argv: list[str], project: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    assert main([*argv, "--cwd", str(project)]) == 0
+    assert json.loads(capsys.readouterr().out)["name"] == project.name
 
 
 def test_unknown_command_is_rejected() -> None:

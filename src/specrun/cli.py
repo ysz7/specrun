@@ -12,13 +12,14 @@ import json
 import sys
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Sequence
+from typing import Iterator, Sequence
 
 from . import __version__
 from .content import ContentNotFound
 from .detect import Project, detect
 from .index import Index, load_index
 from .install import Outcome, Report, install
+from .scan import DEFAULT_DEPTH, Scan, TreeNode, scan
 from .status import FileState, Status, status
 
 COMMANDS = ("init", "sync", "status", "scan")
@@ -51,14 +52,7 @@ def _build_parser() -> argparse.ArgumentParser:
         description="Blueprints and skills for the AI you already code with.",
     )
     parser.add_argument("--version", action="version", version=f"specrun {__version__}")
-    parser.add_argument(
-        "--cwd",
-        metavar="PATH",
-        default=".",
-        help="project to act on (default: the current directory)",
-    )
-    parser.add_argument("--quiet", action="store_true", help="only report problems")
-    parser.add_argument("--json", action="store_true", help="machine-readable output")
+    _add_global_flags(parser)
 
     subcommands = parser.add_subparsers(dest="command", metavar="COMMAND")
     init = subcommands.add_parser(
@@ -78,8 +72,44 @@ def _build_parser() -> argparse.ArgumentParser:
         help="overwrite files that were edited by hand",
     )
     subcommands.add_parser("status", help="what is installed, what is stale, what was edited")
-    subcommands.add_parser("scan", help="read facts about this repository")
+    scan = subcommands.add_parser("scan", help="read facts about this repository")
+    scan.add_argument(
+        "--depth",
+        type=int,
+        default=DEFAULT_DEPTH,
+        metavar="N",
+        help=f"how deep the reported directory tree goes (default: {DEFAULT_DEPTH})",
+    )
+
+    # `specrun scan --json` is how anyone would write it, and how the map skill is documented to
+    # call it, so the global flags are accepted on either side of the command name.
+    for subcommand in (init, sync, subcommands.choices["status"], scan):
+        _add_global_flags(subcommand, after_command=True)
+
     return parser
+
+
+def _add_global_flags(parser: argparse.ArgumentParser, after_command: bool = False) -> None:
+    """The flags every command takes. Repeated on each subcommand so word order does not matter.
+
+    On a subcommand they default to SUPPRESS rather than to a value: an unused flag then leaves
+    the namespace untouched, and whatever was given before the command name survives.
+    """
+    root_default = argparse.SUPPRESS if after_command else "."
+    flag_default = argparse.SUPPRESS if after_command else False
+
+    parser.add_argument(
+        "--cwd",
+        metavar="PATH",
+        default=root_default,
+        help="project to act on (default: the current directory)",
+    )
+    parser.add_argument(
+        "--quiet", action="store_true", default=flag_default, help="only report problems"
+    )
+    parser.add_argument(
+        "--json", action="store_true", default=flag_default, help="machine-readable output"
+    )
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -99,6 +129,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             return cmd_sync(context, force=args.force)
         if args.command == "status":
             return cmd_status(context)
+        if args.command == "scan":
+            return cmd_scan(context, depth=args.depth)
     except CommandError as error:
         print(f"specrun {args.command}: {error}", file=sys.stderr)
         return error.code
@@ -294,6 +326,88 @@ def _print_status(report: Status, content_problem: str | None, quiet: bool) -> N
         print(f"  problem     {problem}", file=sys.stderr)
     if content_problem:
         print(f"  problem     {content_problem}", file=sys.stderr)
+
+
+def cmd_scan(context: Context, depth: int = DEFAULT_DEPTH) -> int:
+    """Read the repository and print what is in it.
+
+    The map skill is the reason this command exists, and it reads `--json`. The text form is for
+    the person checking what the skill will be given, so it shows the same facts in the order
+    someone reading a repository for the first time would want them.
+    """
+    _require_directory(context.root)
+    if depth < 1:
+        raise CommandError("--depth must be at least 1", code=2)
+
+    report = scan(context.root, depth=depth)
+
+    if context.json:
+        print(json.dumps(report.to_dict(), indent=2))
+    else:
+        _print_scan(report, context.quiet)
+
+    return 0
+
+
+def _print_scan(report: Scan, quiet: bool) -> None:
+    languages = ", ".join(f"{name} {count}" for name, count in report.languages)
+
+    if not quiet:
+        print(f"{report.name} · {report.root}")
+        print(f"files: {report.file_count}" + (f" · {languages}" if languages else ""))
+
+        if report.tree and report.tree.children:
+            print()
+            print("tree")
+            for node, level in _tree_lines(report.tree):
+                marker = " …" if node.truncated else ""
+                if node.hidden_children:
+                    marker += f" (+{node.hidden_children} more)"
+                indent = "  " * level
+                print(f"  {indent}{node.name}/ ({node.total_files}){marker}")
+
+        if report.modules:
+            print()
+            print("modules")
+            for module in report.modules:
+                print(
+                    f"  {module.name} ({module.path}) — "
+                    f"{module.language}, {module.files} file(s)"
+                )
+
+        if report.imports:
+            print()
+            print("imports")
+            for edge in report.imports:
+                print(f"  {edge.source} → {edge.target} ({edge.count})")
+
+        if report.entry_points:
+            print()
+            print("entry points")
+            for entry in report.entry_points:
+                print(f"  {entry.name} — {entry.path} [{entry.kind}]")
+
+        if report.infrastructure:
+            print()
+            print("infrastructure")
+            for item in report.infrastructure:
+                print(f"  {item.kind:<22} {item.path}")
+
+        if report.dependencies:
+            print()
+            print(f"dependencies: {len(report.dependencies)} in {', '.join(report.manifests)}")
+            for dependency in report.dependencies:
+                print(f"  {dependency.name} ({dependency.scope})")
+
+    for note in report.notes:
+        print(f"  note        {note}", file=sys.stderr)
+
+
+def _tree_lines(node: TreeNode, level: int = 0) -> Iterator[tuple[TreeNode, int]]:
+    """Depth-first walk of the reported tree, skipping the root's own line."""
+    for child in node.children:
+        yield child, level
+        yield from _tree_lines(child, level + 1)
 
 
 def _require_directory(root: Path) -> None:
