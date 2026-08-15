@@ -1,0 +1,440 @@
+<!doctype html>
+<!--
+  Specrun map — self-contained architecture map.
+
+  Rendering approach adapted from Cocoon-AI/architecture-diagram-generator, MIT (see
+  THIRD_PARTY_LICENSES next to this file): a single self-contained HTML file, one inline SVG with
+  a viewBox, summary cards under the diagram, and an export toolbar. The visual language is not
+  Cocoon's — it comes from design/map-reference.md in the Specrun repository.
+
+  Everything below the SVG's own <style> is an example map, kept complete on purpose: real
+  coordinates are easier to adapt than a description of coordinates. Replace the content, keep
+  the geometry rules.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>PROJECT — map</title>
+    <style>
+      /* Tokens transcribed from design/map-reference.md. No web fonts, no external anything:
+         the file has to open from a double click, offline, from any folder. */
+      :root {
+        color-scheme: light;
+        --bg: #f7f4ed;
+        --paper: #fbf9f4;
+        --card: #fdfcf9;
+        --ink: #23221e;
+        --sub: #6e6961;
+        --faint: #a39d92;
+        --line: #c9c2b4;
+        --line-soft: #ddd7ca;
+        --edge: #3a3833;
+        --orange: #d9622b;
+        --orange-soft: rgba(217, 98, 43, 0.08);
+        --green: #7a9464;
+        --serif: "Tiempos Text", Georgia, "Times New Roman", serif;
+        --sans: Inter, -apple-system, "Segoe UI", sans-serif;
+        --mono: "SF Mono", ui-monospace, Menlo, monospace;
+      }
+
+      body {
+        margin: 0;
+        padding: 40px 24px 64px;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: var(--sans);
+      }
+
+      .sheet {
+        max-width: 1080px;
+        margin: 0 auto;
+      }
+
+      .head {
+        display: flex;
+        align-items: baseline;
+        gap: 12px;
+        margin-bottom: 6px;
+      }
+
+      .head h1 {
+        font-family: var(--serif);
+        font-size: 20px;
+        font-weight: 600;
+        margin: 0;
+      }
+
+      .head .kind {
+        font-family: var(--mono);
+        font-size: 10.5px;
+        color: var(--faint);
+      }
+
+      .subtitle {
+        font-size: 12.5px;
+        color: var(--sub);
+        margin: 0 0 22px;
+        max-width: 620px;
+        line-height: 1.45;
+      }
+
+      /* The toolbar collapses to one ⋯ so it never competes with the map. */
+      .tools {
+        margin-left: auto;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .tools__actions {
+        display: none;
+        gap: 6px;
+      }
+
+      .tools--open .tools__actions {
+        display: flex;
+      }
+
+      .tools button {
+        font-family: var(--mono);
+        font-size: 11px;
+        padding: 4px 10px;
+        border-radius: 8px;
+        border: 1.5px solid var(--line);
+        background: var(--card);
+        color: var(--sub);
+        cursor: pointer;
+      }
+
+      .tools__toggle {
+        border-color: transparent;
+        background: none;
+        color: var(--faint);
+        font-size: 14px;
+        line-height: 1;
+      }
+
+      svg.map {
+        display: block;
+        width: 100%;
+        height: auto;
+      }
+
+      .cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 16px;
+        margin-top: 28px;
+      }
+
+      .cards section {
+        background: var(--card);
+        border: 1.5px solid var(--line);
+        border-radius: 10px;
+        padding: 14px 16px;
+      }
+
+      .cards h2 {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 12.5px;
+        font-weight: 600;
+        margin: 0 0 10px;
+      }
+
+      .cards h2::before {
+        content: "";
+        width: 8px;
+        height: 8px;
+        border-radius: 99px;
+        background: var(--green);
+      }
+
+      .cards ul {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      .cards li {
+        font-family: var(--mono);
+        font-size: 10.5px;
+        color: var(--sub);
+        line-height: 1.7;
+      }
+
+      .cards li span {
+        color: var(--faint);
+      }
+
+      footer {
+        margin-top: 24px;
+        padding-top: 12px;
+        border-top: 1.5px solid var(--line-soft);
+        font-family: var(--mono);
+        font-size: 10.5px;
+        color: var(--faint);
+        line-height: 1.7;
+      }
+
+      @media print {
+        body {
+          padding: 0;
+        }
+        .tools {
+          display: none !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="sheet" id="sheet">
+      <div class="head">
+        <h1>PROJECT</h1>
+        <span class="kind">overview</span>
+        <div class="tools" id="tools">
+          <div class="tools__actions">
+            <button onclick="copyImage(this)">Copy</button>
+            <button onclick="savePng(this)">PNG</button>
+            <button onclick="window.print()">Print</button>
+          </div>
+          <button
+            class="tools__toggle"
+            title="Export"
+            aria-label="Export"
+            onclick="document.getElementById('tools').classList.toggle('tools--open')"
+          >
+            ⋯
+          </button>
+        </div>
+      </div>
+      <p class="subtitle">One sentence on what this project does, in the language of its users.</p>
+
+      <!-- The diagram. viewBox width stays 1000; grow the height to fit the rows.
+           Styles live inside the <svg> so that the export can serialise it on its own. -->
+      <svg class="map" viewBox="0 0 1000 540" xmlns="http://www.w3.org/2000/svg" id="map">
+        <style>
+          .card-bg { fill: #fdfcf9; stroke: #c9c2b4; stroke-width: 1.5; }
+          .card-bg--infra { fill: #fbf9f4; }
+          .card-bg--integration { stroke-dasharray: 5 4; }
+          .title { font-family: Inter, -apple-system, "Segoe UI", sans-serif; font-size: 12.5px; font-weight: 550; fill: #23221e; }
+          .title--focus { font-size: 15px; font-weight: 600; }
+          .apex-title { font-family: "Tiempos Text", Georgia, serif; font-size: 20px; font-weight: 600; fill: #23221e; }
+          .say { font-family: Inter, -apple-system, "Segoe UI", sans-serif; font-size: 12px; fill: #6e6961; }
+          .say--apex { font-size: 12.5px; fill: #23221e; }
+          .meta { font-family: "SF Mono", ui-monospace, Menlo, monospace; font-size: 9.5px; fill: #a39d92; }
+          .meta--warn { fill: #d9622b; }
+          .dot { fill: #7a9464; }
+          .dot--muted { fill: #a39d92; }
+          .dot--warn { fill: #d9622b; }
+          .rule { fill: #d9622b; }
+          /* Two line kinds, and two is the budget. Dark, thin, continuous, arrowed = contains.
+             Orange, thicker, dotted, small arrow = uses. */
+          .contains { fill: none; stroke: #3a3833; stroke-width: 1.5; }
+          .uses { fill: none; stroke: #d9622b; stroke-width: 2.2; stroke-dasharray: 0.1 6.5; stroke-linecap: round; }
+        </style>
+        <defs>
+          <marker id="tip" orient="auto" markerWidth="9" markerHeight="9" refX="6.5" refY="3.5">
+            <path d="M0,0 L7,3.5 L0,7 z" fill="#3a3833" />
+          </marker>
+          <marker id="tip-uses" orient="auto" markerWidth="7" markerHeight="7" refX="5" refY="2.6">
+            <path d="M0,0 L5,2.6 L0,5.2 z" fill="#d9622b" />
+          </marker>
+        </defs>
+
+        <!-- Apex: the project itself. Max width 440, centred, serif name over a 36×2 orange rule. -->
+        <rect x="280" y="24" width="440" height="76" rx="10" class="card-bg" />
+        <text x="500" y="52" class="apex-title" text-anchor="middle">Project name</text>
+        <rect x="482" y="62" width="36" height="2" class="rule" />
+        <text x="500" y="86" class="say say--apex" text-anchor="middle">What the whole thing is for, in one line.</text>
+
+        <!-- Contains: leaves the apex vertically, turns on a junction line 26px below it, runs
+             sideways, turns again, enters the card from above, stopping 12px short. Corner
+             radius 9, quadratic corners — never a diagonal, never a bezier. -->
+        <path class="contains" marker-end="url(#tip)" d="M500 100 L500 117 Q500 126 491 126 L169 126 Q160 126 160 135 L160 158" />
+        <path class="contains" marker-end="url(#tip)" d="M500 100 L500 158" />
+        <path class="contains" marker-end="url(#tip)" d="M500 100 L500 117 Q500 126 509 126 L831 126 Q840 126 840 135 L840 158" />
+
+        <!-- Top-level cards. Width 300, height 66, three per row: x = 10, 350, 690. -->
+        <g>
+          <rect x="10" y="170" width="300" height="66" rx="10" class="card-bg" />
+          <circle cx="25" cy="191" r="4" class="dot" />
+          <text x="40" y="195" class="title">Reading a repository</text>
+          <text x="295" y="195" class="meta" text-anchor="end">capability</text>
+          <text x="25" y="213" class="say">Turns a checkout into facts nobody guessed</text>
+          <text x="25" y="228" class="meta">Python · ast · stdlib</text>
+        </g>
+
+        <g>
+          <rect x="350" y="170" width="300" height="66" rx="10" class="card-bg" />
+          <circle cx="365" cy="191" r="4" class="dot" />
+          <text x="380" y="195" class="title">Installing into a project</text>
+          <text x="635" y="195" class="meta" text-anchor="end">capability</text>
+          <text x="365" y="213" class="say">Writes the content in and remembers what it wrote</text>
+          <text x="365" y="228" class="meta">Python · hashlib · json</text>
+        </g>
+
+        <g>
+          <rect x="690" y="170" width="300" height="66" rx="10" class="card-bg card-bg--integration" />
+          <circle cx="705" cy="191" r="4" class="dot--muted" />
+          <text x="720" y="195" class="title">The coding agent</text>
+          <text x="975" y="195" class="meta" text-anchor="end">integration</text>
+          <text x="705" y="213" class="say">Reads the installed skills and follows them</text>
+          <text x="705" y="228" class="meta">Claude Code</text>
+        </g>
+
+        <!-- Uses: routed through a gutter, never across a card. -->
+        <path class="uses" marker-end="url(#tip-uses)" d="M310 203 L346 203" />
+        <path class="uses" marker-end="url(#tip-uses)" d="M650 203 L686 203" />
+
+        <!-- Second row hangs from the same apex by way of a spine down the left gutter (x=330),
+             then a junction rail at y=285 shared by both cards. A spine that crosses a card is
+             the one mistake this layout can make; the gutters are there to be used. -->
+        <path class="contains" d="M500 100 L500 117 Q500 126 491 126 L339 126 Q330 126 330 135 L330 276" />
+        <path class="contains" marker-end="url(#tip)" d="M330 276 Q330 285 321 285 L169 285 Q160 285 160 294 L160 304" />
+        <path class="contains" marker-end="url(#tip)" d="M330 276 Q330 285 339 285 L491 285 Q500 285 500 294 L500 304" />
+
+        <g>
+          <rect x="10" y="316" width="300" height="66" rx="10" class="card-bg card-bg--infra" />
+          <circle cx="25" cy="337" r="4" class="dot" />
+          <text x="40" y="341" class="title">Checks on every change</text>
+          <text x="295" y="341" class="meta" text-anchor="end">infrastructure</text>
+          <text x="25" y="359" class="say">141 tests, run on each pull request</text>
+          <text x="25" y="374" class="meta">pytest · GitHub Actions</text>
+        </g>
+
+        <g>
+          <rect x="350" y="316" width="300" height="66" rx="10" class="card-bg" />
+          <circle cx="365" cy="337" r="4" class="dot" />
+          <text x="380" y="341" class="title">Driving it from a terminal</text>
+          <text x="635" y="341" class="meta" text-anchor="end">control</text>
+          <rect x="380" y="348" width="36" height="2" class="rule" />
+          <text x="365" y="368" class="say">Four commands: init, sync, status, scan</text>
+        </g>
+
+        <!-- Detail mode adds a third level: children stacked under their parent, 20px apart,
+             narrower (260×52) because width is what carries depth here. -->
+        <path class="contains" marker-end="url(#tip)" d="M160 382 L160 420" />
+        <g>
+          <rect x="30" y="432" width="260" height="52" rx="10" class="card-bg card-bg--infra" />
+          <circle cx="45" cy="450" r="4" class="dot" />
+          <text x="60" y="454" class="title">Import graph</text>
+          <text x="45" y="472" class="meta">tests/test_scan.py · 19 cases</text>
+        </g>
+
+        <!-- Legend. Node types are told apart by border and surface, never by inventing colours:
+             the palette has one accent and adding a second is what breaks the look first. -->
+        <g transform="translate(690, 420)">
+          <text x="0" y="0" class="meta">legend</text>
+          <rect x="0" y="10" width="16" height="10" rx="3" class="card-bg" />
+          <text x="24" y="19" class="meta">capability — something the project does</text>
+          <rect x="0" y="26" width="16" height="10" rx="3" class="card-bg card-bg--infra" />
+          <text x="24" y="35" class="meta">infrastructure — how it is run and checked</text>
+          <rect x="0" y="42" width="16" height="10" rx="3" class="card-bg card-bg--integration" />
+          <text x="24" y="51" class="meta">integration — a system outside this repo</text>
+          <rect x="0" y="62" width="16" height="2" class="rule" />
+          <text x="24" y="67" class="meta">control — how it is driven from outside</text>
+          <path class="contains" d="M0 79 L16 79" marker-end="url(#tip)" />
+          <text x="24" y="83" class="meta">contains</text>
+          <path class="uses" d="M0 95 L16 95" marker-end="url(#tip-uses)" />
+          <text x="24" y="99" class="meta">uses</text>
+        </g>
+      </svg>
+
+      <!-- Facts worth stating in words rather than drawing. Three cards, straight from the scan. -->
+      <div class="cards">
+        <section>
+          <h2>Ways in</h2>
+          <ul>
+            <li>specrun <span>— console script, src/specrun/cli.py</span></li>
+            <li>/specrun:map <span>— skill, called in chat</span></li>
+          </ul>
+        </section>
+        <section>
+          <h2>Outside systems</h2>
+          <ul>
+            <li>Claude Code <span>— reads .claude/skills</span></li>
+            <li>PyPI <span>— release channel</span></li>
+          </ul>
+        </section>
+        <section>
+          <h2>Running and checking</h2>
+          <ul>
+            <li>pytest <span>— 141 tests</span></li>
+            <li>.github/workflows/ci.yml <span>— on every pull request</span></li>
+          </ul>
+        </section>
+      </div>
+
+      <footer>
+        PROJECT · N files · python, typescript · read by <code>specrun scan</code> on DATE<br />
+        Rendering approach based on Cocoon-AI/architecture-diagram-generator by Cocoon AI, MIT.
+      </footer>
+    </div>
+
+    <script>
+      // Export without a single external script: the SVG carries its own styles, so it can be
+      // serialised, drawn onto a canvas and handed over as a PNG. A CDN-loaded rasteriser would
+      // leave dead buttons the first time this file is opened on a plane.
+      function render(scale) {
+        const svg = document.getElementById("map");
+        const box = svg.viewBox.baseVal;
+        const copy = svg.cloneNode(true);
+        copy.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+        copy.setAttribute("width", box.width);
+        copy.setAttribute("height", box.height);
+        const source = new XMLSerializer().serializeToString(copy);
+        const canvas = document.createElement("canvas");
+        canvas.width = box.width * scale;
+        canvas.height = box.height * scale;
+        const context = canvas.getContext("2d");
+        context.fillStyle = "#f7f4ed";
+        context.fillRect(0, 0, canvas.width, canvas.height);
+
+        return new Promise((resolve, reject) => {
+          const image = new Image();
+          image.onload = () => {
+            context.drawImage(image, 0, 0, canvas.width, canvas.height);
+            canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error("no blob"))));
+          };
+          image.onerror = () => reject(new Error("svg did not load"));
+          image.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(source);
+        });
+      }
+
+      function flash(button, text) {
+        const original = button.textContent;
+        button.textContent = text;
+        setTimeout(() => (button.textContent = original), 1600);
+      }
+
+      async function copyImage(button) {
+        try {
+          const blob = await render(2);
+          await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
+          flash(button, "copied");
+        } catch (error) {
+          // The clipboard needs a user gesture and a secure context; from file:// some browsers
+          // refuse. Saying so beats a button that appears to do nothing.
+          flash(button, "blocked");
+        }
+      }
+
+      async function savePng(button) {
+        try {
+          const blob = await render(2);
+          const link = document.createElement("a");
+          link.href = URL.createObjectURL(blob);
+          link.download = "map.png";
+          link.click();
+          setTimeout(() => URL.revokeObjectURL(link.href), 5000);
+          flash(button, "saved");
+        } catch (error) {
+          flash(button, "failed");
+        }
+      }
+    </script>
+  </body>
+</html>

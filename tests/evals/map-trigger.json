@@ -1,0 +1,82 @@
+[
+  {
+    "query": "can you draw me a map of this repo so i can actually see how the pieces fit together",
+    "should_trigger": true
+  },
+  {
+    "query": "new backend hire starts monday and i want a one-page picture of the architecture to walk her through",
+    "should_trigger": true
+  },
+  {
+    "query": "build a map of the project",
+    "should_trigger": true
+  },
+  {
+    "query": "i inherited this service and have no idea what's in it. give me a diagram of the main parts and how they connect",
+    "should_trigger": true
+  },
+  {
+    "query": "visualise the architecture of this codebase as an html file i can open in a browser",
+    "should_trigger": true
+  },
+  {
+    "query": "the map from last week is too shallow — expand the ingestion side so i can see what's inside it",
+    "should_trigger": true
+  },
+  {
+    "query": "architecture overview picture of this project please, i'm presenting it at the review tomorrow",
+    "should_trigger": true
+  },
+  {
+    "query": "draw the top-level components of this application and what uses what",
+    "should_trigger": true
+  },
+  {
+    "query": "regenerate the project map, we've added the billing service since you made it",
+    "should_trigger": true
+  },
+  {
+    "query": "what even is this codebase? something visual would help more than a wall of text",
+    "should_trigger": true
+  },
+  {
+    "query": "draw a class diagram for the Order, Invoice and LineItem models with their relationships",
+    "should_trigger": false
+  },
+  {
+    "query": "make a sequence diagram of the checkout flow, from the click through to the payment webhook",
+    "should_trigger": false
+  },
+  {
+    "query": "produce an ER diagram of the database schema from the migrations",
+    "should_trigger": false
+  },
+  {
+    "query": "flowchart the retry logic in send_invoice, i want to see every branch and where it gives up",
+    "should_trigger": false
+  },
+  {
+    "query": "diagram our aws network topology — vpcs, subnets, security groups and what talks to what",
+    "should_trigger": false
+  },
+  {
+    "query": "add a mermaid diagram to the readme showing the stages of our ci pipeline",
+    "should_trigger": false
+  },
+  {
+    "query": "explain in writing how this repo is structured — a section for the readme, no pictures",
+    "should_trigger": false
+  },
+  {
+    "query": "walk me through what the scan module does, function by function",
+    "should_trigger": false
+  },
+  {
+    "query": "plot test coverage per package as a bar chart so we can see which ones are lagging",
+    "should_trigger": false
+  },
+  {
+    "query": "our tool-design blueprint is stale and pinned to an sdk we've moved off — i want our own version of it",
+    "should_trigger": false
+  }
+]
