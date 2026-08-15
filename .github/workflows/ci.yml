@@ -1,0 +1,94 @@
+name: ci
+
+# Every push and pull request. Nothing here publishes anything: the only thing that reaches
+# users from this workflow is the pass or fail mark on a commit.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # The oldest version the package claims to support, and the newest it is tested against.
+        # The middle of the range fails in the same ways as its neighbours and costs a job.
+        python-version: ["3.11", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          enable-cache: true
+
+      - name: The committed index still matches the blueprint headers
+        # Generated from the headers and committed, so an edited header with a stale index would
+        # leave the router offering a blueprint under text the blueprint no longer contains.
+        run: uv run --frozen python -m specrun.dev.reindex --check
+
+      - name: Tests
+        # Blueprint headers and skill frontmatter are validated here, by tests/test_shipped_content.py.
+        run: uv run --frozen pytest -q
+
+  wheel:
+    # The content lives in the plugin folder and is copied into the package at build time, so a
+    # broken force-include rule is invisible in a source checkout: every command keeps working
+    # against the repository copy. This job is the only place that failure shows up before a user
+    # meets it, so it installs the built wheel somewhere the repository cannot be walked up to.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.13"
+          enable-cache: true
+
+      - run: uv build
+
+      - name: Install the wheel and run it against a project outside this checkout
+        run: |
+          set -euo pipefail
+          work="$(mktemp -d)"
+          cp dist/*.whl "$work/"
+          cd "$work"
+          uv venv "$work/.venv"
+          # --python names the target explicitly: an inherited VIRTUAL_ENV would otherwise send
+          # the install somewhere else and leave this step testing nothing.
+          uv pip install --python "$work/.venv/bin/python" ./*.whl
+          mkdir project && cd project
+          git init -q .
+          "$work/.venv/bin/specrun" --version
+          "$work/.venv/bin/specrun" init
+          test -f .claude/skills/blueprints/SKILL.md
+          test -f .claude/skills/map/assets/template.html
+          "$work/.venv/bin/specrun" status
+
+  marketplace:
+    # The other channel. It has no build step at all — Claude Code reads these files straight from
+    # git — so the only check that exists is that they parse and point at things that are there.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Manifests parse and the plugin they name is present
+        run: |
+          set -euo pipefail
+          python3 -c "
+          import json, pathlib, sys
+          market = json.loads(pathlib.Path('.claude-plugin/marketplace.json').read_text())
+          for entry in market['plugins']:
+              source = pathlib.Path(entry['source'])
+              manifest = json.loads((source / '.claude-plugin' / 'plugin.json').read_text())
+              assert manifest['name'] == entry['name'], (manifest['name'], entry['name'])
+              skills = sorted(p.parent.name for p in source.glob('skills/*/SKILL.md'))
+              assert skills, f'{source} ships no skills'
+              print(entry['name'], manifest['version'], skills)
+          "

@@ -1,0 +1,87 @@
+name: release
+
+# Only a tag publishes. A push to main updates the marketplace — Claude Code reads the repository
+# directly — but it must never move the package on PyPI, because a version there cannot be taken
+# back or replaced.
+on:
+  push:
+    tags: ["v*"]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.13"
+          enable-cache: true
+
+      - name: The tag and the package agree on the version
+        # The version lives in `src/specrun/__init__.py`; the tag is typed by hand. A mismatch here
+        # is the cheap failure — the expensive one is a wheel published under the wrong number.
+        run: |
+          set -euo pipefail
+          tag="${GITHUB_REF_NAME#v}"
+          version="$(uv run --frozen python -c 'import specrun; print(specrun.__version__)')"
+          if [ "$tag" != "$version" ]; then
+            echo "tag $GITHUB_REF_NAME does not match specrun $version" >&2
+            exit 1
+          fi
+
+      - name: The committed index still matches the blueprint headers
+        run: uv run --frozen python -m specrun.dev.reindex --check
+
+      - name: Tests
+        run: uv run --frozen pytest -q
+
+      - run: uv build
+
+      - name: The wheel actually carries the content
+        # `pyproject.toml` copies the plugin's skills into the package at build time. Without this
+        # check a wheel missing that folder installs cleanly and fails on the user's first command.
+        run: |
+          set -euo pipefail
+          uv run --frozen python -m zipfile -l dist/*.whl \
+            | grep -q "specrun/_content/skills/blueprints/index.json"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    # Trusted Publishing: PyPI is told to trust this repository, workflow and environment, and
+    # hands out a short-lived token in exchange for the job's OIDC identity. No API token is stored
+    # anywhere, so there is none to leak or rotate.
+    environment: pypi
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+      - uses: pypa/gh-action-pypi-publish@release/v1
+
+  github-release:
+    needs: publish
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+      - name: Publish the tag as a release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" dist/* --generate-notes --title "$GITHUB_REF_NAME"

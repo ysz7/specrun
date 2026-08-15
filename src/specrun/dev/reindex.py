@@ -1,15 +1,21 @@
-"""Rebuild `index.json` from the blueprint headers.
+"""Rebuild the generated files in the content folder from the blueprint headers.
 
-Run by hand before a release, and in CI to check that the committed index still matches the
+Run by hand before a release, and in CI to check that what is committed still matches the
 blueprints:
 
     python -m specrun.dev.reindex
     python -m specrun.dev.reindex --check
 
-The index is generated rather than maintained because it duplicates every header field it lists.
-Anything duplicated by hand eventually disagrees with its source, and here the disagreement would
-be invisible: the router would go on offering a blueprint under a `use_when` that the blueprint
-itself no longer contains.
+Two files are generated. `index.json` is what the package reads at install time; it duplicates
+every header field it lists, and anything duplicated by hand eventually disagrees with its source
+— invisibly, here, since the router would go on offering a blueprint under a `use_when` the
+blueprint itself no longer contains.
+
+The router `SKILL.md` beside it is the marketplace's copy. A project that installs the CLI gets a
+router compiled for it, listing its own local blueprints as well; a project that installs the
+plugin from the marketplace has no build step at all and reads whatever is in git. So the bundled
+blueprints need a router committed next to them, and it is produced by the same emitter that
+writes the per-project one rather than maintained as a second, drifting copy.
 """
 
 from __future__ import annotations
@@ -22,8 +28,9 @@ from typing import Any, Sequence
 
 from .. import __version__, paths
 from ..content import content_root
+from ..emit.claude import router
 from ..frontmatter import BlueprintError, read
-from ..index import SCHEMA_VERSION, bundled_blueprints_dir, bundled_index_path
+from ..index import SCHEMA_VERSION, Skill, bundled_blueprints_dir, bundled_index_path
 
 
 def build(root: Path, content_version: str) -> dict[str, Any]:
@@ -87,6 +94,25 @@ def render(index: dict[str, Any]) -> str:
     return json.dumps(index, indent=2, ensure_ascii=False) + "\n"
 
 
+def bundled_router(root: Path) -> str:
+    """The router as the marketplace serves it: bundled blueprints only, no local ones.
+
+    The standalone skills are passed by name and with no files, because the router only asks
+    which of them are present — reading their contents here would be work thrown away.
+    """
+    blueprints = tuple(read(path) for path in sorted(bundled_blueprints_dir(root).glob("*.md")))
+    skills = tuple(Skill(name=name, files={}) for name in standalone_skills(root))
+    return router(blueprints, skills)
+
+
+def generated(root: Path, content_version: str) -> dict[Path, str]:
+    """Every file in the content folder that is produced rather than written, by path."""
+    return {
+        bundled_index_path(root): render(build(root, content_version)),
+        bundled_index_path(root).parent / paths.SKILL_FILE_NAME: bundled_router(root),
+    }
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="python -m specrun.dev.reindex",
@@ -100,31 +126,38 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     root = content_root()
-    target = bundled_index_path(root)
     try:
-        rendered = render(build(root, __version__))
+        files = generated(root, __version__)
     except BlueprintError as error:
         print(f"reindex: {error}", file=sys.stderr)
         return 1
 
     if args.check:
-        current = target.read_text(encoding="utf-8") if target.is_file() else ""
-        if current != rendered:
+        stale = [
+            target
+            for target, rendered in files.items()
+            if (target.read_text(encoding="utf-8") if target.is_file() else "") != rendered
+        ]
+        for target in stale:
             print(
                 f"reindex: {target} is out of date; run `python -m specrun.dev.reindex`",
                 file=sys.stderr,
             )
+        if stale:
             return 1
-        print(f"reindex: {target} is up to date")
+        print(f"reindex: {len(files)} generated file(s) up to date in {root}")
         return 0
 
-    target.parent.mkdir(parents=True, exist_ok=True)
-    target.write_text(rendered, encoding="utf-8")
-    written = json.loads(rendered)
+    for target, rendered in files.items():
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(rendered, encoding="utf-8")
+
+    written = json.loads(files[bundled_index_path(root)])
     count, skills = len(written["blueprints"]), len(written["skills"])
     print(
-        f"reindex: wrote {target} ({count} blueprint{'s' if count != 1 else ''}, "
-        f"{skills} skill{'s' if skills != 1 else ''})"
+        f"reindex: wrote {len(files)} file(s) in {root} "
+        f"({count} blueprint{'s' if count != 1 else ''}, "
+        f"{skills} standalone skill{'s' if skills != 1 else ''})"
     )
     return 0
 

@@ -135,6 +135,21 @@ def test_staleness_uses_each_blueprint_own_promise(content_dir: Path, project: P
     assert [b.id for b in stale] == ["rag-baseline"]  # verified 2026-02-01, good for 90d
 
 
+def test_a_blueprint_that_promised_no_freshness_never_goes_stale(
+    content_dir: Path, project: Path
+) -> None:
+    # The three fields in LOCAL_NEW are everything a project has to write, and the README says so.
+    # Treating the silence about `verified_at` as an expired promise would greet every first local
+    # blueprint with a staleness warning about a date its author never wrote.
+    write_index(content_dir, BUNDLED)
+    write_local(project, "house-style", LOCAL_NEW)
+
+    index = load_index(project, content_dir)
+
+    assert index.by_id("house-style") is not None
+    assert "house-style" not in [b.id for b in index.stale(date(2099, 1, 1))]
+
+
 def test_an_index_from_a_newer_specrun_is_refused_rather_than_misread(
     content_dir: Path, project: Path
 ) -> None:
