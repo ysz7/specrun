@@ -49,31 +49,58 @@ an `integration`.
 
 ### The budget
 
-Up to **9 blocks at the top level**, up to **7 children** under any one block, **3 levels** deep.
+Up to **9 blocks at the top level**, up to **7 children** under any one block, **3 levels** deep
+counting the project itself: the project names the page, the blocks are the columns, the features
+hang off the blocks.
 
 These are not arbitrary: a map with thirty boxes is read as a wall and closed. When something
 does not fit, group it rather than lengthening the row — three siblings that share a purpose
 become one block with three children, and the map gets easier to read instead of longer.
 
-### Four kinds of node
+### The project is not a box
+
+The project's own name is the page heading, not a node. Drawing it as a card at the top costs a
+row and says nothing the title bar has not already said. What replaces it is the **boundary**: a
+dashed rectangle with a mono label (`Your project checkout`, `The service`) around the blocks this
+repository actually owns. Anything outside the boundary — the person driving it, an agent reading
+its output, a database it writes to — is somebody else's, and that is the fastest fact the map can
+give a newcomer.
+
+### Kinds of node
 
 | Kind | What it is | How it is drawn |
 |---|---|---|
 | `capability` | something the project does for its users | card fill, solid border |
-| `infrastructure` | how it is built, run, tested, deployed | quieter `paper` fill, solid border |
-| `integration` | a system outside this repository | dashed border |
+| `infrastructure` | how it is built, run, tested, deployed | quieter `bg` fill, solid border — reads recessed against the panel |
+| `integration` | a system outside this repository | dashed border, drawn outside the boundary |
 | `control` | how a person or another program drives it — CLI, HTTP entry, schedule | solid border, short orange rule under the title |
+| `feature` | something inside a block, at the second level | smaller card, 148 wide, one line of text, no tag |
 
-Kinds are told apart by surface, border and label — never by inventing new colours. The palette
-has one accent on purpose, and a second saturated hue is what breaks the look fastest.
+Kinds are told apart by surface, border, size and label — never by inventing new colours. The
+palette has one accent on purpose, and a second saturated hue is what breaks the look fastest.
+
+### The stack inside a top-level card
+
+A top-level card is a stack of at most four lines, and the order is fixed:
+
+1. **name** — sans 12.5/600, centred. What the block does, in the language of the task.
+2. **orange rule** — 36×2, `control` only, directly under the name.
+3. **statement** — sans 11 `sub`, centred. One sentence.
+4. **tag** — mono 9.5 on its own bottom line, centred: the machine fact worth carrying on the card
+   itself (`Python · ast · stdlib`, `init · sync · status · scan`, `:8080`). `faint` by default;
+   `--hot` (orange) on the one or two cards where the reader should stop.
+
+A card with nothing to put in the tag line is shorter (76 instead of 84) rather than padded. A
+fifth line has nowhere to go — that is what the feature nodes below the card are for.
 
 ### Two kinds of edge
 
-- **contains** — a dark thin elbow with an arrowhead, drawn from a parent's bottom edge into a
-  child's top edge. This is the skeleton and it reads first.
-- **uses** — an orange dotted line with a small arrowhead: this block calls that one. Take these
-  from the import graph, and draw only the ones a reader needs; a map with an edge for every
-  import is a dependency graph, which is a different and much less useful picture.
+- **contains** — a dark thin elbow with an arrowhead, from a block down to a feature inside it.
+  Vertical, short, and always entering the feature from its left edge.
+- **uses** — an orange dotted line with a small arrowhead: this block calls that one. This is the
+  left-to-right spine of the map and the thing a reader follows first. Take these from the import
+  graph, and draw only the ones a reader needs; a map with an edge for every import is a
+  dependency graph, which is a different and much less useful picture.
 
 Two kinds is the whole budget. If you find yourself wanting a third line style for "sends events
 to" or "reads from", put that in the card's statement instead — words are cheaper than a legend
@@ -93,45 +120,58 @@ Copy `assets/template.html` and edit it. It is a complete worked example with re
 which is far easier to adapt than a description of coordinates would be. Keep its geometry and
 replace its content.
 
-The layout is a grid inside a `viewBox="0 0 1000 H"`; grow `H` to fit the rows and leave the
-width alone.
+The map **reads left to right**: who drives it, then what it does, then what it writes to. Each
+column is a vertical stack of cards, and the whole thing sits on one panel with a faint grid. Grow
+`H` in `viewBox="0 0 1000 H"` to fit the tallest column; leave the width alone.
 
 | Measure | Value |
 |---|---|
-| Card | 300 × 66, `rx="10"`, border `1.5px` |
-| Third-level card | 260 × 52 — width is what carries depth |
-| Apex card | 440 wide, centred at x=500 |
-| Columns | x = 10, 350, 690 (three per row) |
-| Gutters, where vertical lines may run | x = 330 and x = 670 |
-| Row pitch | 146 (card top to card top) |
-| Junction line below a parent | 26px |
-| Elbow corner radius | 9, drawn as quadratic curves |
-| Arrow stops short of a card | 12px |
+| Panel | x=12, y=12, w=976, rx=12, faint 80px grid clipped to it |
+| Columns | x = 44, 278, 512, 746 — four of them, 190 wide, 44 apart |
+| Gutters, where vertical runs belong | the middle of each gap: x = 256, 490, 724 |
+| Top-level card | 190 × 84 (× 76 with no tag line), `rx="10"`, border `1.5px` |
+| Feature card | 148 × 28, `rx="8"`, at `columnX + 42` — flush with the card's right edge |
+| Feature spine | leaves the card's bottom at `columnX + 24` |
+| First feature top | 16 below the card; feature pitch 36 |
+| Gap under a block's last feature | 28 before the next card in the column |
+| Boundary inset | 28 left of the first column inside it, 18 right of the last |
+| Elbow corner radius | 9 on `uses`, 8 on the feature spine, drawn as quadratic curves |
+| Arrow stops short of a card | 6px |
 
-Inside a card: an 8px status dot, the title in sans 12.5, the kind in mono 9.5 right-aligned, one
-sentence in sans 12, and the technologies in mono 9.5. Three levels of information per card is the
-ceiling; a fourth has nowhere to go.
+Four columns is what fits; three or two is common and fine — spread the columns out rather than
+leaving a hole. A column with one card in it is a legitimate column.
+
+**Features hang off their parent, never between two blocks.** The spine drops from the parent's
+bottom-left and each feature is entered from its *left* edge, so the line reaching the third
+feature never crosses the first two. Each feature is one line of sans 11 — no statement, no tag.
+If a feature needs a sentence, it is a block, not a feature.
 
 **SVG does not wrap text**, so a line that is too long does not reflow — it runs out of the card
-and over whatever is beside it, and nothing in the markup looks wrong. Count characters against
-these ceilings before writing them, and cut words rather than shrinking the font:
+and over whatever is beside it, and nothing in the markup looks wrong. The cards are centred, so
+an overflow spills out of *both* sides. Count characters against these ceilings before writing
+them, and cut words rather than shrinking the font:
 
 | Line | Ceiling |
 |---|---|
-| title, sans 12.5 | 28 characters — the kind tag on the right eats the rest of the row |
-| statement, sans 12 | 46 characters |
-| technologies, mono 9.5 | 46 characters, separated by ` · ` |
+| name, sans 12.5/600 | 24 characters |
+| statement, sans 11 | 28 characters |
+| tag, mono 9.5 | 28 characters, separated by ` · ` |
+| feature, sans 11 | 20 characters |
+| boundary label, mono 10.5 | 34 characters |
 
-`Pydantic AI · asyncio · shared by console and server` is 52 and overflows;
-`Pydantic AI · asyncio · shared runtime` fits and says the same thing.
+`Pydantic AI · asyncio · shared runtime` is 38 and overflows the tag line;
+`Pydantic AI · asyncio` fits and the rest belongs in the statement.
 
-Two mistakes are worth checking for by eye, because both look fine in the markup:
+Three mistakes are worth checking for by eye, because all three look fine in the markup:
 
-- **a connector crossing a card.** Vertical runs belong in the gutters. If an edge cannot get
-  where it is going without crossing something, the arrangement is wrong, not the edge —
-  reorder the blocks so that related ones are neighbours.
-- **the legend sitting on top of the drawing.** Put it in clear canvas below the lowest card, and
-  grow the viewBox height to make room.
+- **a connector crossing a card.** Horizontal `uses` runs at card mid-height, vertical runs belong
+  in the gutters. If an edge cannot get where it is going without crossing something, the
+  arrangement is wrong, not the edge — reorder the columns so that related blocks are neighbours.
+- **features colliding with the next card down.** A block with four features is 160px taller than
+  one with none; the column below it has to move down, not overlap.
+- **the legend sitting on top of the drawing.** It goes in the clear space under the shortest
+  column, and its longest label has to end before the next column starts. If there is no clear
+  space, grow the viewBox rather than tucking it into a margin.
 
 Do not add web fonts, CDN scripts or external images. The map has to open from a double click,
 from any folder, with no network — that is the whole reason it is one file. The export buttons in
@@ -141,13 +181,13 @@ work, and styles defined outside it would be lost.
 
 ## 4. Two modes
 
-**Overview** is the default: one level, the top-level blocks only, no children. It is what
-somebody asking "what is this repo" wants, and it fits on a screen.
+**Overview** is the default: the columns and the boundary, no features. It is what somebody asking
+"what is this repo" wants, and it fits on a screen.
 
 **Detail** is for a request that asks for it — "show me what's inside the agent loop", "expand
-the ingestion side". Add children under the blocks that were asked about and leave the rest at
-one level. Expanding everything at once produces the thirty-box wall the budget exists to
-prevent.
+the ingestion side". Hang features under the blocks that were asked about and leave the other
+columns bare. Every block carrying features at once produces the thirty-box wall the budget exists
+to prevent, and it makes the columns wildly different heights.
 
 ## 5. Save and open it
 
@@ -164,9 +204,12 @@ still render perfectly:
 - would someone who has never worked here answer "what does this application do" from the top
   level alone?
 - do any top-level names contain a language, a framework, a product or a directory name?
+- does the boundary hold exactly what this repository owns, with the people and the outside
+  systems drawn beyond it?
 - do the arrows read as *uses*, or have they started to read as data flowing through a pipeline?
 - does every block trace back to something in the scan or to a file you actually opened?
-- does anything overlap: a line across a card, the legend over a node, text past a card's edge?
+- does anything overlap: a line across a card, features running into the card below them, the
+  legend over a node, text past a card's edge?
 
 ---
 

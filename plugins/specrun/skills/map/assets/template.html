@@ -4,8 +4,11 @@
 
   Rendering approach adapted from Cocoon-AI/architecture-diagram-generator, MIT (see
   THIRD_PARTY_LICENSES next to this file): a single self-contained HTML file, one inline SVG with
-  a viewBox, summary cards under the diagram, and an export toolbar. The visual language is not
-  Cocoon's — it comes from design/map-reference.md in the Specrun repository.
+  a viewBox, a bordered canvas panel, a dashed boundary around what belongs to the project,
+  columns that read left to right, a legend inside the boundary, summary cards under the diagram
+  and an export toolbar. The visual language is not Cocoon's — it comes from
+  design/map-reference.md in the Specrun repository: warm paper, one accent, kinds told apart by
+  surface and stroke rather than by colour.
 
   Everything below the SVG's own <style> is an example map, kept complete on purpose: real
   coordinates are easier to adapt than a description of coordinates. Replace the content, keep
@@ -58,6 +61,18 @@
         margin-bottom: 6px;
       }
 
+      /* The accent dot before the name: the one place the page states its own subject. */
+      .head h1::before {
+        content: "";
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        border-radius: 99px;
+        background: var(--orange);
+        margin-right: 10px;
+        vertical-align: middle;
+      }
+
       .head h1 {
         font-family: var(--serif);
         font-size: 20px;
@@ -74,7 +89,7 @@
       .subtitle {
         font-size: 12.5px;
         color: var(--sub);
-        margin: 0 0 22px;
+        margin: 0 0 22px 18px;
         max-width: 620px;
         line-height: 1.45;
       }
@@ -212,30 +227,45 @@
       </div>
       <p class="subtitle">One sentence on what this project does, in the language of its users.</p>
 
-      <!-- The diagram. viewBox width stays 1000; grow the height to fit the rows.
+      <!-- The diagram. viewBox width stays 1000; grow the height to fit the columns.
            Styles live inside the <svg> so that the export can serialise it on its own. -->
-      <svg class="map" viewBox="0 0 1000 540" xmlns="http://www.w3.org/2000/svg" id="map">
+      <svg class="map" viewBox="0 0 1000 660" xmlns="http://www.w3.org/2000/svg" id="map">
         <style>
+          .panel { fill: #fbf9f4; stroke: #c9c2b4; stroke-width: 1.5; }
+          /* The boundary: what belongs to this project. Everything drawn outside it is somebody
+             else's — a person, another program, a service. Grey and dashed, never orange: an
+             orange dash means "asserted but not verified" on a card, and one meaning per stroke. */
+          .bound { fill: none; stroke: #c9c2b4; stroke-width: 1.5; stroke-dasharray: 7 5; }
+          .bound-label { font-family: "SF Mono", ui-monospace, Menlo, monospace; font-size: 10.5px; fill: #6e6961; }
+
           .card-bg { fill: #fdfcf9; stroke: #c9c2b4; stroke-width: 1.5; }
-          .card-bg--infra { fill: #fbf9f4; }
+          .card-bg--infra { fill: #f7f4ed; }
           .card-bg--integration { stroke-dasharray: 5 4; }
-          .title { font-family: Inter, -apple-system, "Segoe UI", sans-serif; font-size: 12.5px; font-weight: 550; fill: #23221e; }
-          .title--focus { font-size: 15px; font-weight: 600; }
-          .apex-title { font-family: "Tiempos Text", Georgia, serif; font-size: 20px; font-weight: 600; fill: #23221e; }
-          .say { font-family: Inter, -apple-system, "Segoe UI", sans-serif; font-size: 12px; fill: #6e6961; }
-          .say--apex { font-size: 12.5px; fill: #23221e; }
+          .feature-bg { fill: #fdfcf9; stroke: #c9c2b4; stroke-width: 1.5; }
+
+          .title { font-family: Inter, -apple-system, "Segoe UI", sans-serif; font-size: 12.5px; font-weight: 600; fill: #23221e; }
+          .say { font-family: Inter, -apple-system, "Segoe UI", sans-serif; font-size: 11px; fill: #6e6961; }
+          .feature { font-family: Inter, -apple-system, "Segoe UI", sans-serif; font-size: 11px; fill: #23221e; }
+          /* The bottom line of the stack: the machine fact worth carrying on the card itself.
+             Faint by default; --hot only where the reader should stop. */
+          .tag { font-family: "SF Mono", ui-monospace, Menlo, monospace; font-size: 9.5px; fill: #a39d92; }
+          .tag--hot { fill: #d9622b; }
           .meta { font-family: "SF Mono", ui-monospace, Menlo, monospace; font-size: 9.5px; fill: #a39d92; }
-          .meta--warn { fill: #d9622b; }
-          .dot { fill: #7a9464; }
-          .dot--muted { fill: #a39d92; }
-          .dot--warn { fill: #d9622b; }
           .rule { fill: #d9622b; }
-          /* Two line kinds, and two is the budget. Dark, thin, continuous, arrowed = contains.
-             Orange, thicker, dotted, small arrow = uses. */
+
+          /* Two line kinds, and two is the budget. Dark, thin, continuous, arrowed = contains,
+             which here is a block reaching down to the features inside it. Orange, thicker,
+             dotted, small arrow = uses, which is the left-to-right spine of the map. */
           .contains { fill: none; stroke: #3a3833; stroke-width: 1.5; }
           .uses { fill: none; stroke: #d9622b; stroke-width: 2.2; stroke-dasharray: 0.1 6.5; stroke-linecap: round; }
         </style>
         <defs>
+          <pattern id="grid" width="80" height="80" patternUnits="userSpaceOnUse">
+            <path d="M80 0 L0 0 L0 80" fill="none" stroke="#ddd7ca" stroke-width="1" opacity="0.45" />
+          </pattern>
+          <clipPath id="panel-clip">
+            <rect x="12" y="12" width="976" height="636" rx="12" />
+          </clipPath>
           <marker id="tip" orient="auto" markerWidth="9" markerHeight="9" refX="6.5" refY="3.5">
             <path d="M0,0 L7,3.5 L0,7 z" fill="#3a3833" />
           </marker>
@@ -244,102 +274,123 @@
           </marker>
         </defs>
 
-        <!-- Apex: the project itself. Max width 440, centred, serif name over a 36×2 orange rule. -->
-        <rect x="280" y="24" width="440" height="76" rx="10" class="card-bg" />
-        <text x="500" y="52" class="apex-title" text-anchor="middle">Project name</text>
-        <rect x="482" y="62" width="36" height="2" class="rule" />
-        <text x="500" y="86" class="say say--apex" text-anchor="middle">What the whole thing is for, in one line.</text>
+        <!-- The canvas panel, with a faint 80px grid clipped to it. The grid is scenery: it gives
+             the columns something to sit on and is never used to align anything by eye. -->
+        <rect x="12" y="12" width="976" height="636" rx="12" class="panel" />
+        <rect x="12" y="12" width="976" height="636" fill="url(#grid)" clip-path="url(#panel-clip)" />
 
-        <!-- Contains: leaves the apex vertically, turns on a junction line 26px below it, runs
-             sideways, turns again, enters the card from above, stopping 12px short. Corner
-             radius 9, quadratic corners — never a diagonal, never a bezier. -->
-        <path class="contains" marker-end="url(#tip)" d="M500 100 L500 117 Q500 126 491 126 L169 126 Q160 126 160 135 L160 158" />
-        <path class="contains" marker-end="url(#tip)" d="M500 100 L500 158" />
-        <path class="contains" marker-end="url(#tip)" d="M500 100 L500 117 Q500 126 509 126 L831 126 Q840 126 840 135 L840 158" />
+        <!-- The boundary around what this repository actually is. Columns 2 and 3 sit inside it;
+             the developer on the left and the agent on the right are outside, because neither is
+             ours. -->
+        <rect x="250" y="56" width="470" height="560" rx="10" class="bound" />
+        <text x="266" y="78" class="bound-label">Your project checkout</text>
 
-        <!-- Top-level cards. Width 300, height 66, three per row: x = 10, 350, 690. -->
+        <!-- Column 1, outside: who drives it. x = 44, card 190 wide. -->
         <g>
-          <rect x="10" y="170" width="300" height="66" rx="10" class="card-bg" />
-          <circle cx="25" cy="191" r="4" class="dot" />
-          <text x="40" y="195" class="title">Reading a repository</text>
-          <text x="295" y="195" class="meta" text-anchor="end">capability</text>
-          <text x="25" y="213" class="say">Turns a checkout into facts nobody guessed</text>
-          <text x="25" y="228" class="meta">Python · ast · stdlib</text>
+          <rect x="44" y="232" width="190" height="76" rx="10" class="card-bg" />
+          <text x="139" y="257" class="title" text-anchor="middle">Developer</text>
+          <rect x="121" y="264" width="36" height="2" class="rule" />
+          <text x="139" y="290" class="say" text-anchor="middle">Runs commands, reads the map</text>
+        </g>
+
+        <!-- Uses: the left-to-right spine. Short, dotted, orange, small arrowhead. -->
+        <path class="uses" marker-end="url(#tip-uses)" d="M234 270 H272" />
+
+        <!-- Column 2, x = 278. A stacked card: name, one sentence, then the machine fact on its
+             own bottom line. Three text levels plus the tag is the ceiling. -->
+        <g>
+          <rect x="278" y="228" width="190" height="84" rx="10" class="card-bg" />
+          <text x="373" y="253" class="title" text-anchor="middle">Driving it from a shell</text>
+          <rect x="355" y="260" width="36" height="2" class="rule" />
+          <text x="373" y="278" class="say" text-anchor="middle">Four commands, one lock file</text>
+          <text x="373" y="304" class="tag tag--hot" text-anchor="middle">init · sync · status · scan</text>
+        </g>
+
+        <!-- Uses, routed through the gutter at x = 490: out of the card, one corner, up or down
+             the gutter, one corner, into the next card. Never a diagonal, never across a card. -->
+        <path class="uses" marker-end="url(#tip-uses)" d="M468 270 H481 Q490 270 490 261 V139 Q490 130 499 130 H506" />
+        <path class="uses" marker-end="url(#tip-uses)" d="M468 270 H481 Q490 270 490 279 V349 Q490 358 499 358 H506" />
+
+        <!-- Column 3, x = 512: the stack of what the project does. Each card owns the space under
+             it, where its features hang. -->
+        <g>
+          <rect x="512" y="88" width="190" height="84" rx="10" class="card-bg" />
+          <text x="607" y="113" class="title" text-anchor="middle">Reading a repository</text>
+          <text x="607" y="138" class="say" text-anchor="middle">Turns a checkout into facts</text>
+          <text x="607" y="164" class="tag" text-anchor="middle">Python · ast · stdlib</text>
+        </g>
+
+        <!-- Features: what is inside that block, hanging off it. The spine leaves the card's
+             bottom-left at x = card + 24 and each feature is entered from the left, so a feature
+             is never crossed by the line reaching the one below it. -->
+        <path class="contains" marker-end="url(#tip)" d="M536 172 V194 Q536 202 544 202 H548" />
+        <path class="contains" marker-end="url(#tip)" d="M536 172 V230 Q536 238 544 238 H548" />
+        <path class="contains" marker-end="url(#tip)" d="M536 172 V266 Q536 274 544 274 H548" />
+        <g>
+          <rect x="554" y="188" width="148" height="28" rx="8" class="feature-bg" />
+          <text x="566" y="206" class="feature">Import graph</text>
+        </g>
+        <g>
+          <rect x="554" y="224" width="148" height="28" rx="8" class="feature-bg" />
+          <text x="566" y="242" class="feature">Entry points</text>
+        </g>
+        <g>
+          <rect x="554" y="260" width="148" height="28" rx="8" class="feature-bg" />
+          <text x="566" y="278" class="feature">Infrastructure found</text>
         </g>
 
         <g>
-          <rect x="350" y="170" width="300" height="66" rx="10" class="card-bg" />
-          <circle cx="365" cy="191" r="4" class="dot" />
-          <text x="380" y="195" class="title">Installing into a project</text>
-          <text x="635" y="195" class="meta" text-anchor="end">capability</text>
-          <text x="365" y="213" class="say">Writes the content in and remembers what it wrote</text>
-          <text x="365" y="228" class="meta">Python · hashlib · json</text>
+          <rect x="512" y="316" width="190" height="84" rx="10" class="card-bg" />
+          <text x="607" y="341" class="title" text-anchor="middle">Installing in a project</text>
+          <text x="607" y="366" class="say" text-anchor="middle">Writes it in and remembers</text>
+          <text x="607" y="392" class="tag" text-anchor="middle">Python · hashlib · json</text>
+        </g>
+        <path class="contains" marker-end="url(#tip)" d="M536 400 V422 Q536 430 544 430 H548" />
+        <path class="contains" marker-end="url(#tip)" d="M536 400 V458 Q536 466 544 466 H548" />
+        <g>
+          <rect x="554" y="416" width="148" height="28" rx="8" class="feature-bg" />
+          <text x="566" y="434" class="feature">Lock file</text>
+        </g>
+        <g>
+          <rect x="554" y="452" width="148" height="28" rx="8" class="feature-bg" />
+          <text x="566" y="470" class="feature">Three-way sync</text>
         </g>
 
         <g>
-          <rect x="690" y="170" width="300" height="66" rx="10" class="card-bg card-bg--integration" />
-          <circle cx="705" cy="191" r="4" class="dot--muted" />
-          <text x="720" y="195" class="title">The coding agent</text>
-          <text x="975" y="195" class="meta" text-anchor="end">integration</text>
-          <text x="705" y="213" class="say">Reads the installed skills and follows them</text>
-          <text x="705" y="228" class="meta">Claude Code</text>
+          <rect x="512" y="508" width="190" height="84" rx="10" class="card-bg card-bg--infra" />
+          <text x="607" y="533" class="title" text-anchor="middle">Checks on every change</text>
+          <text x="607" y="558" class="say" text-anchor="middle">141 tests on each change</text>
+          <text x="607" y="584" class="tag" text-anchor="middle">pytest · GitHub Actions</text>
         </g>
 
-        <!-- Uses: routed through a gutter, never across a card. -->
-        <path class="uses" marker-end="url(#tip-uses)" d="M310 203 L346 203" />
-        <path class="uses" marker-end="url(#tip-uses)" d="M650 203 L686 203" />
+        <path class="uses" marker-end="url(#tip-uses)" d="M702 358 H740" />
 
-        <!-- Second row hangs from the same apex by way of a spine down the left gutter (x=330),
-             then a junction rail at y=285 shared by both cards. A spine that crosses a card is
-             the one mistake this layout can make; the gutters are there to be used. -->
-        <path class="contains" d="M500 100 L500 117 Q500 126 491 126 L339 126 Q330 126 330 135 L330 276" />
-        <path class="contains" marker-end="url(#tip)" d="M330 276 Q330 285 321 285 L169 285 Q160 285 160 294 L160 304" />
-        <path class="contains" marker-end="url(#tip)" d="M330 276 Q330 285 339 285 L491 285 Q500 285 500 294 L500 304" />
-
+        <!-- Column 4, outside: a system this repository does not own. -->
         <g>
-          <rect x="10" y="316" width="300" height="66" rx="10" class="card-bg card-bg--infra" />
-          <circle cx="25" cy="337" r="4" class="dot" />
-          <text x="40" y="341" class="title">Checks on every change</text>
-          <text x="295" y="341" class="meta" text-anchor="end">infrastructure</text>
-          <text x="25" y="359" class="say">141 tests, run on each pull request</text>
-          <text x="25" y="374" class="meta">pytest · GitHub Actions</text>
+          <rect x="746" y="316" width="190" height="84" rx="10" class="card-bg card-bg--integration" />
+          <text x="841" y="341" class="title" text-anchor="middle">The coding agent</text>
+          <text x="841" y="366" class="say" text-anchor="middle">Reads the skills and follows</text>
+          <text x="841" y="392" class="tag" text-anchor="middle">Claude Code</text>
         </g>
 
-        <g>
-          <rect x="350" y="316" width="300" height="66" rx="10" class="card-bg" />
-          <circle cx="365" cy="337" r="4" class="dot" />
-          <text x="380" y="341" class="title">Driving it from a terminal</text>
-          <text x="635" y="341" class="meta" text-anchor="end">control</text>
-          <rect x="380" y="348" width="36" height="2" class="rule" />
-          <text x="365" y="368" class="say">Four commands: init, sync, status, scan</text>
-        </g>
-
-        <!-- Detail mode adds a third level: children stacked under their parent, 20px apart,
-             narrower (260×52) because width is what carries depth here. -->
-        <path class="contains" marker-end="url(#tip)" d="M160 382 L160 420" />
-        <g>
-          <rect x="30" y="432" width="260" height="52" rx="10" class="card-bg card-bg--infra" />
-          <circle cx="45" cy="450" r="4" class="dot" />
-          <text x="60" y="454" class="title">Import graph</text>
-          <text x="45" y="472" class="meta">tests/test_scan.py · 19 cases</text>
-        </g>
-
-        <!-- Legend. Node types are told apart by border and surface, never by inventing colours:
-             the palette has one accent and adding a second is what breaks the look first. -->
-        <g transform="translate(690, 420)">
+        <!-- Legend, in the clear space under the shortest column — never over the drawing. Kinds
+             are told apart by surface and stroke, never by inventing a second colour. -->
+        <g transform="translate(278, 400)">
           <text x="0" y="0" class="meta">legend</text>
-          <rect x="0" y="10" width="16" height="10" rx="3" class="card-bg" />
-          <text x="24" y="19" class="meta">capability — something the project does</text>
-          <rect x="0" y="26" width="16" height="10" rx="3" class="card-bg card-bg--infra" />
-          <text x="24" y="35" class="meta">infrastructure — how it is run and checked</text>
-          <rect x="0" y="42" width="16" height="10" rx="3" class="card-bg card-bg--integration" />
-          <text x="24" y="51" class="meta">integration — a system outside this repo</text>
-          <rect x="0" y="62" width="16" height="2" class="rule" />
-          <text x="24" y="67" class="meta">control — how it is driven from outside</text>
-          <path class="contains" d="M0 79 L16 79" marker-end="url(#tip)" />
-          <text x="24" y="83" class="meta">contains</text>
-          <path class="uses" d="M0 95 L16 95" marker-end="url(#tip-uses)" />
-          <text x="24" y="99" class="meta">uses</text>
+          <rect x="0" y="12" width="16" height="10" rx="3" class="card-bg" />
+          <text x="24" y="21" class="meta">capability — what it does</text>
+          <rect x="0" y="28" width="16" height="10" rx="3" class="card-bg card-bg--infra" />
+          <text x="24" y="37" class="meta">infrastructure — how it runs</text>
+          <rect x="0" y="44" width="16" height="10" rx="3" class="card-bg card-bg--integration" />
+          <text x="24" y="53" class="meta">integration — outside</text>
+          <rect x="0" y="64" width="16" height="2" class="rule" />
+          <text x="24" y="69" class="meta">control — how it is driven</text>
+          <rect x="0" y="76" width="16" height="10" rx="4" class="feature-bg" />
+          <text x="24" y="85" class="meta">feature — inside a block</text>
+          <path class="contains" d="M0 100 L16 100" marker-end="url(#tip)" />
+          <text x="24" y="104" class="meta">contains</text>
+          <path class="uses" d="M0 116 L16 116" marker-end="url(#tip-uses)" />
+          <text x="24" y="120" class="meta">uses</text>
         </g>
       </svg>
 

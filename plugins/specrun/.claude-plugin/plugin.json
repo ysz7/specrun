@@ -1,7 +1,7 @@
 {
   "name": "specrun",
   "description": "52 architectural blueprints your AI picks up on its own, skills for building agents, RAG and evals, a skill that writes new blueprints from work you have just done, and an architecture map of the project.",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "author": {
     "name": "Denys Zhodik"
   },

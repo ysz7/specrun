@@ -261,51 +261,69 @@ card that a connector can pass under must have an opaque background, which is ex
 
 ## 5. Composition
 
-See `design/media/map-example.png`. The map is a single centred column on a plain canvas — no grid,
-no frame, no panels around the diagram.
+Two compositions exist, and they are not the same drawing.
+
+**The prototype's** was a single centred column on a plain canvas — an apex card, a wrapped row of
+sibling chips, then a focused card with children stacked under it, everything on one 720-wide
+column that panned and zoomed as one transformed group (`transform: translate(x, y) scale(s)`,
+`transform-origin: 0 0`, wheel zoom clamped to 0.3–2.4, `s = min(1, (viewport − 24) / 720)` on
+first paint). Vertical rhythm was loose at the top (68 above the apex, 46 to the sibling row, 40
+to the focused card) and tight at the bottom (20 between stacked children); junction lines sat 26
+below a parent. That arrangement suited an interactive tree with one node in focus at a time.
+
+**The shipped map's** is different, and deliberately so: it is a static picture, read once, by
+somebody who has never been here. It reads **left to right** on a bordered panel — who drives the
+system, then what the system does, then what it writes to — with a dashed boundary around the part
+this repository owns. `design/media/map-example.png` still shows the old column and is due a
+redraw.
 
 ```
-              ┌──────────────────────────┐
-              │  Apex  (serif, centred)  │   max-width 440, padding 14×24
-              │  ───                     │   36×2 orange rule under the title
-              │  statement · meta · hint │
-              └────────────┬─────────────┘
-                           │ elbow, edge colour, arrowhead
-   ┌────────┐ ┌────────┐ ┌─┴──────┐ ┌────────┐   sibling chips, wrapped rows
-   │ chip   │ │ chip   │ │ chip ● │ │ chip   │   gap 8, centred, max-width 680
-   └────────┘ └────────┘ └────────┘ └────────┘   selected chip: orange border + orangeTint
-                           │
-                  ┌────────┴────────┐
-                  │ Focused card    │   width 320, padding 13×18, orange border
-                  └────────┬────────┘
-                  ┌────────┴────────┐
-                  │ Child card      │   width 300, padding 9×13
-                  └─────────────────┘
-                  ┌─────────────────┐
-                  │ Child card      │   stacked, 20px apart, dotted orange between
-                  └─────────────────┘
+  ╭─ panel, faint 80px grid ───────────────────────────────────────────╮
+  │            ┌╴ Your project checkout ╶╴╴╴╴╴╴╴╴╴╴╴╴╴╴╴╴┐             │
+  │            ╷                        ┌──────────────┐ ╷             │
+  │            ╷                        │ Block        │ ╷             │
+  │            ╷                    ╭──▸│ statement    │ ╷             │
+  │ ┌────────┐ ╷ ┌──────────────┐   │   │ tag          │ ╷             │
+  │ │ Person │ ╷ │ Control      │   │   └──────┬───────┘ ╷             │
+  │ │ ─────  │─┼▸│ statement    │───╯          ├─▸[ feature ]          │
+  │ │ stmt   │ ╷ │ tag          │              ╰─▸[ feature ]          │
+  │ └────────┘ ╷ └──────────────┘   ╮   ┌──────────────┐ ╷ ┌─────────┐ │
+  │            ╷   legend           ╰──▸│ Block        │─┼▸┆ outside ┆ │
+  │            ╷                        └──────────────┘ ╷ └─────────┘ │
+  │            └╴╴╴╴╴╴╴╴╴╴╴╴╴╴╴╴╴╴╴╴╴╴╴╴╴╴╴╴╴╴╴╴╴╴╴╴╴╴╴╴╴┘             │
+  ╰────────────────────────────────────────────────────────────────────╯
 ```
 
 ### Metrics
 
 | Measure | Value |
 |---|---|
-| Column width | 720 |
-| Top padding above the apex | 68 |
-| Apex → sibling row | 46 |
-| Sibling row → focused card | 40 |
-| Between stacked child cards | 20 |
-| Gap between sibling chips | 8 |
-| Sibling row max width | 680 |
-| Junction line offset below the parent | 26 |
-| Bottom breathing room | 160 |
+| viewBox | `0 0 1000 H`, width fixed, height grown to fit |
+| Panel | x=12, y=12, w=976, rx=12, `paper` fill, `line` border, 80px grid at 45% opacity |
+| Columns | x = 44, 278, 512, 746 — 190 wide, 44 apart |
+| Top-level card | 190 × 84, or × 76 with no tag line |
+| Feature card | 148 × 28, rx 8, at `columnX + 42` |
+| Feature spine | `columnX + 24`; first feature 16 below the card, pitch 36 |
+| Gap under the last feature | 28 |
+| Boundary | dashed `7 5` in `line`, inset 28 left / 18 right of the columns it holds |
+| Elbow corner radius | 9 on `uses`, 8 on the feature spine |
+| Arrow stops short of a card | 6 |
 
-Vertical rhythm is loose at the top (68, 46, 40) and tight at the bottom (20). Related things sit
-close; levels are separated by air. The gaps are the hierarchy.
+Card text is centred and stacked: name (sans 12.5/600) at `y + 25`, the `control` rule at `y + 32`,
+statement (sans 11 `sub`) at `y + 50`, tag (mono 9.5, `faint` or `orange`) at `y + 76`. That fourth
+line is the one addition the shipped map makes to the prototype's three-level ceiling, and it only
+works because it is machine facts in mono, visibly a different register from the sentence above it.
 
-The whole column is one transformed group: `transform: translate(x, y) scale(s)` with
-`transform-origin: 0 0`. Pan is a drag (`cursor: grab` → `grabbing`), zoom is the wheel, clamped
-to **0.3–2.4**. On first paint the column is centred and scaled to fit: `s = min(1, (viewport − 24) / 720)`.
+Two changes from the prototype are worth stating plainly, because both contradict rules written
+above and both were chosen:
+
+- **The apex card is gone.** The project's name is the page heading; the boundary label says what
+  the enclosed part is. A card that only repeats the title costs a row.
+- **There is a panel and a grid.** The prototype had neither — "no grid, no frame, no panels" was
+  true of it. A static picture that will be exported to PNG and pasted into a document needs an
+  edge; a floating column on paper does not read as a diagram once it leaves the app.
+- **`infrastructure` fills with `bg`, not `paper`.** On the paper panel, `paper` is the panel's own
+  colour and the card would lose its fill; `bg` is one step darker and reads as recessed.
 
 ### Chrome
 
