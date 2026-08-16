@@ -10,11 +10,16 @@ into the map's self-contained HTML template. The prototype had no stylesheet of 
 palette lived in a TypeScript token object and everything else was inline React styles — so that
 file is a transcription, not a copy. This document explains the values; that one applies them.
 
-Screenshots live next to this file in `design/media/`:
+One image lives next to this file in `design/media/`:
 
-- `hero.png` — the full window, one level of the map expanded. The authoritative composition
-  reference.
-- `demo.gif` — a short screencast of navigation, useful for motion and state changes.
+- `map-example.png` — a map the skill drew for a real project. The authoritative composition
+  reference, and the one in the README.
+
+The prototype's own screenshots (`hero.png`, `demo.gif`) were removed once the skill's output
+diverged from them. They showed an application window around the map — a title bar, a chat panel,
+a status bar — none of which the skill produces; keeping them meant the composition reference and
+the shipped output disagreed with nobody to arbitrate. The values below still come from the
+prototype's code, which is a different claim and still true.
 
 The prototype was light-only (`color-scheme: light`); no dark palette ever existed. A dark theme,
 if one is wanted later, has to be designed rather than recovered.
@@ -256,8 +261,8 @@ card that a connector can pass under must have an opaque background, which is ex
 
 ## 5. Composition
 
-See `design/media/hero.png`. The map is a single centred column on a plain canvas — no grid, no
-frame, no panels around the diagram.
+See `design/media/map-example.png`. The map is a single centred column on a plain canvas — no grid,
+no frame, no panels around the diagram.
 
 ```
               ┌──────────────────────────┐
@@ -367,7 +372,6 @@ Values were read from the Electron prototype's renderer, principally:
   scrollbars
 - `renderer/src/main.tsx` — the pulse keyframes
 
-Those files are removed in the next phase. This document and `design/media/` replace them.
-
-`media/feature-node.png`, `media/drift.png` and `media/plan-phases.png` in the original repository
-are blank placeholder images and carry no design information, so they were not copied here.
+Those files are removed in the next phase. This document and `design/map-tokens.css` replace them:
+the prototype is gone, and so are the screenshots of it. What the skill draws today is the
+reference for composition — this document, for everything measurable.

@@ -16,6 +16,11 @@ injection risk.
 Everything is plain markdown in your repository. Nothing calls a model except your agent, in your
 chat, on your account.
 
+![An architecture map drawn by the map skill](https://raw.githubusercontent.com/ysz7/specrun/main/design/media/map-example.png)
+
+*The `map` skill on another project: blocks named after the jobs the system does, not after its
+directories. One self-contained HTML file, no network.*
+
 ---
 
 ## Install
