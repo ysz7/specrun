@@ -51,6 +51,29 @@ without installing anything.
 Install one or the other. With both, the same skills arrive twice under slightly different names,
 and the duplicates compete for the same requests.
 
+### Updating
+
+The plugin, from inside Claude Code — the first line refreshes the catalog, the second installs
+what it found:
+
+```
+/plugin marketplace update specrun
+/plugin update specrun@specrun
+```
+
+The CLI, once per machine and then once per project:
+
+```
+uv tool upgrade specrun
+cd your-project
+specrun sync
+```
+
+`sync` rewrites the blueprints and skills it installed and leaves every file you have edited by
+hand exactly as it is, listing them at the end. Your own blueprints in `.specrun/local/` are never
+touched. Nothing is upgraded behind your back: without `sync`, a project keeps the content it was
+given, and `specrun status` is what tells you a newer set is available.
+
 ---
 
 ## What you get
@@ -218,8 +241,8 @@ else does.
 .specrun/map.html        a generated report, gitignored
 ```
 
-Upgrading is `uv tool upgrade specrun` followed by `specrun sync` in each project. `specrun status`
-says when the package carries content newer than what is installed.
+`specrun status` says when the package carries content newer than what is installed — the signal
+to run `specrun sync`, as above.
 
 ---
 
