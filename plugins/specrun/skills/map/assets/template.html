@@ -2,17 +2,19 @@
 <!--
   Specrun map — self-contained architecture map.
 
-  Rendering approach adapted from Cocoon-AI/architecture-diagram-generator, MIT (see
-  THIRD_PARTY_LICENSES next to this file): a single self-contained HTML file, one inline SVG with
-  a viewBox, a bordered canvas panel, a dashed boundary around what belongs to the project,
-  columns that read left to right, a legend inside the boundary, summary cards under the diagram
-  and an export toolbar. The visual language is not Cocoon's — it comes from
-  design/map-reference.md in the Specrun repository: warm paper, one accent, kinds told apart by
-  surface and stroke rather than by colour.
+  Structure adapted from Cocoon-AI/architecture-diagram-generator, MIT (see THIRD_PARTY_LICENSES
+  next to this file): header with a dot, one inline SVG in a bordered container, a dashed boundary
+  around what belongs to the system, a grid pattern behind everything, a legend below the
+  boundaries, three summary cards, a footer, and a collapsing export toolbar.
 
-  Everything below the SVG's own <style> is an example map, kept complete on purpose: real
-  coordinates are easier to adapt than a description of coordinates. Replace the content, keep
-  the geometry rules.
+  Two things are ours and must not drift back to Cocoon's: the palette (warm paper, one accent,
+  kinds told apart by surface and stroke rather than by colour — see design/map-reference.md), and
+  the export path, which rasterises the inline SVG itself instead of loading html2canvas and jsPDF
+  from a CDN. The map has to open offline from a double click.
+
+  The map below is a complete worked example, kept complete on purpose: real coordinates are
+  easier to adapt than a description of coordinates. Every position in it was chosen for this
+  content — copy the patterns and the spacing rules, not the numbers.
 -->
 <html lang="en">
   <head>
@@ -34,7 +36,6 @@
         --line-soft: #ddd7ca;
         --edge: #3a3833;
         --orange: #d9622b;
-        --orange-soft: rgba(217, 98, 43, 0.08);
         --green: #7a9464;
         --serif: "Tiempos Text", Georgia, "Times New Roman", serif;
         --sans: Inter, -apple-system, "Segoe UI", sans-serif;
@@ -130,9 +131,20 @@
         line-height: 1;
       }
 
+      /* The diagram's frame is a div, not an SVG rect, so the drawing can scroll sideways on a
+         narrow screen instead of shrinking to illegibility. */
+      .canvas {
+        background: var(--paper);
+        border: 1.5px solid var(--line);
+        border-radius: 14px;
+        padding: 18px;
+        overflow-x: auto;
+      }
+
       svg.map {
         display: block;
         width: 100%;
+        min-width: 900px;
         height: auto;
       }
 
@@ -227,172 +239,174 @@
       </div>
       <p class="subtitle">One sentence on what this project does, in the language of its users.</p>
 
-      <!-- The diagram. viewBox width stays 1000; grow the height to fit the columns.
-           Styles live inside the <svg> so that the export can serialise it on its own. -->
-      <svg class="map" viewBox="0 0 1000 660" xmlns="http://www.w3.org/2000/svg" id="map">
-        <style>
-          .panel { fill: #fbf9f4; stroke: #c9c2b4; stroke-width: 1.5; }
-          /* The boundary: what belongs to this project. Everything drawn outside it is somebody
-             else's — a person, another program, a service. Grey and dashed, never orange: an
-             orange dash means "asserted but not verified" on a card, and one meaning per stroke. */
-          .bound { fill: none; stroke: #c9c2b4; stroke-width: 1.5; stroke-dasharray: 7 5; }
-          .bound-label { font-family: "SF Mono", ui-monospace, Menlo, monospace; font-size: 10.5px; fill: #6e6961; }
+      <div class="canvas">
+        <!-- Grow the viewBox in both directions to fit what the map needs. Styles live inside the
+             <svg> so that the export can serialise it on its own. -->
+        <svg class="map" viewBox="0 0 1000 600" xmlns="http://www.w3.org/2000/svg" id="map">
+          <style>
+            /* The boundary: what belongs to this project. Everything drawn outside it is somebody
+               else's. Grey and dashed, never orange — an orange dash means "asserted but not
+               verified" on a card, and one meaning per stroke. */
+            .bound { fill: none; stroke: #c9c2b4; stroke-width: 1.5; stroke-dasharray: 8 4; }
+            .bound-label { font-family: "SF Mono", ui-monospace, Menlo, monospace; font-size: 10.5px; fill: #6e6961; }
 
-          .card-bg { fill: #fdfcf9; stroke: #c9c2b4; stroke-width: 1.5; }
-          .card-bg--infra { fill: #f7f4ed; }
-          .card-bg--integration { stroke-dasharray: 5 4; }
-          .feature-bg { fill: #fdfcf9; stroke: #c9c2b4; stroke-width: 1.5; }
+            /* Four kinds, told apart by surface and stroke. Never by inventing a second colour:
+               the palette has one accent and that is what keeps it ours rather than Cocoon's. */
+            .card-bg { fill: #fdfcf9; stroke: #c9c2b4; stroke-width: 1.5; }
+            .card-bg--infra { fill: #f7f4ed; }
+            .card-bg--integration { stroke-dasharray: 5 4; }
+            .pill { fill: #fdfcf9; stroke: #d9622b; stroke-width: 1.5; }
 
-          .title { font-family: Inter, -apple-system, "Segoe UI", sans-serif; font-size: 12.5px; font-weight: 600; fill: #23221e; }
-          .say { font-family: Inter, -apple-system, "Segoe UI", sans-serif; font-size: 11px; fill: #6e6961; }
-          .feature { font-family: Inter, -apple-system, "Segoe UI", sans-serif; font-size: 11px; fill: #23221e; }
-          /* The bottom line of the stack: the machine fact worth carrying on the card itself.
-             Faint by default; --hot only where the reader should stop. */
-          .tag { font-family: "SF Mono", ui-monospace, Menlo, monospace; font-size: 9.5px; fill: #a39d92; }
-          .tag--hot { fill: #d9622b; }
-          .meta { font-family: "SF Mono", ui-monospace, Menlo, monospace; font-size: 9.5px; fill: #a39d92; }
-          .rule { fill: #d9622b; }
+            .title { font-family: Inter, -apple-system, "Segoe UI", sans-serif; font-size: 12.5px; font-weight: 600; fill: #23221e; }
+            .say { font-family: Inter, -apple-system, "Segoe UI", sans-serif; font-size: 11px; fill: #6e6961; }
+            .tag { font-family: "SF Mono", ui-monospace, Menlo, monospace; font-size: 9.5px; fill: #a39d92; }
+            .tag--hot { fill: #d9622b; }
+            .meta { font-family: "SF Mono", ui-monospace, Menlo, monospace; font-size: 9.5px; fill: #a39d92; }
+            .rule { fill: #d9622b; }
 
-          /* Two line kinds, and two is the budget. Dark, thin, continuous, arrowed = contains,
-             which here is a block reaching down to the features inside it. Orange, thicker,
-             dotted, small arrow = uses, which is the left-to-right spine of the map. */
-          .contains { fill: none; stroke: #3a3833; stroke-width: 1.5; }
-          .uses { fill: none; stroke: #d9622b; stroke-width: 2.2; stroke-dasharray: 0.1 6.5; stroke-linecap: round; }
-        </style>
-        <defs>
-          <pattern id="grid" width="80" height="80" patternUnits="userSpaceOnUse">
-            <path d="M80 0 L0 0 L0 80" fill="none" stroke="#ddd7ca" stroke-width="1" opacity="0.45" />
-          </pattern>
-          <clipPath id="panel-clip">
-            <rect x="12" y="12" width="976" height="636" rx="12" />
-          </clipPath>
-          <marker id="tip" orient="auto" markerWidth="9" markerHeight="9" refX="6.5" refY="3.5">
-            <path d="M0,0 L7,3.5 L0,7 z" fill="#3a3833" />
-          </marker>
-          <marker id="tip-uses" orient="auto" markerWidth="7" markerHeight="7" refX="5" refY="2.6">
-            <path d="M0,0 L5,2.6 L0,5.2 z" fill="#d9622b" />
-          </marker>
-        </defs>
+            /* Two strokes and no more. A solid arrow means "uses" and may run at any angle; a
+               dashed stub joins a block to a channel pill sitting in the gap below it. */
+            .uses { stroke: #3a3833; stroke-width: 1.5; fill: none; }
+            .channel { stroke: #c9c2b4; stroke-width: 1.5; stroke-dasharray: 4 4; fill: none; }
+          </style>
+          <defs>
+            <marker id="tip" orient="auto" markerWidth="9" markerHeight="9" refX="8" refY="3.5">
+              <path d="M0,0 L8,3.5 L0,7 z" fill="#3a3833" />
+            </marker>
+            <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+              <path d="M40 0 L0 0 L0 40" fill="none" stroke="#ddd7ca" stroke-width="0.75" opacity="0.6" />
+            </pattern>
+          </defs>
 
-        <!-- The canvas panel, with a faint 80px grid clipped to it. The grid is scenery: it gives
-             the columns something to sit on and is never used to align anything by eye. -->
-        <rect x="12" y="12" width="976" height="636" rx="12" class="panel" />
-        <rect x="12" y="12" width="976" height="636" fill="url(#grid)" clip-path="url(#panel-clip)" />
+          <rect width="100%" height="100%" fill="url(#grid)" />
 
-        <!-- The boundary around what this repository actually is. Columns 2 and 3 sit inside it;
-             the developer on the left and the agent on the right are outside, because neither is
-             ours. -->
-        <rect x="250" y="56" width="470" height="560" rx="10" class="bound" />
-        <text x="266" y="78" class="bound-label">Your project checkout</text>
+          <!-- The boundary is drawn before the cards so its dashes pass behind them. -->
+          <rect x="155" y="30" width="680" height="490" rx="12" class="bound" />
+          <text x="171" y="50" class="bound-label">Your project checkout</text>
 
-        <!-- Column 1, outside: who drives it. x = 44, card 190 wide. -->
-        <g>
-          <rect x="44" y="232" width="190" height="76" rx="10" class="card-bg" />
-          <text x="139" y="257" class="title" text-anchor="middle">Developer</text>
-          <rect x="121" y="264" width="36" height="2" class="rule" />
-          <text x="139" y="290" class="say" text-anchor="middle">Runs commands, reads the map</text>
-        </g>
+          <!-- ARROWS FIRST. SVG paints in document order, so anything drawn here ends up behind
+               every card below and a line may run under a card without showing through it. Draw
+               them after the cards and the map fills with lines crossing names. -->
+          <line x1="130" y1="200" x2="176" y2="200" class="uses" marker-end="url(#tip)" />
 
-        <!-- Uses: the left-to-right spine. Short, dotted, orange, small arrowhead. -->
-        <path class="uses" marker-end="url(#tip-uses)" d="M234 270 H272" />
+          <!-- A fan out of one block into a stack: straight lines at whatever angle they need.
+               They leave the block at different heights so they stay apart where they start. -->
+          <line x1="350" y1="170" x2="416" y2="98" class="uses" marker-end="url(#tip)" />
+          <line x1="350" y1="190" x2="416" y2="214" class="uses" marker-end="url(#tip)" />
+          <line x1="350" y1="210" x2="416" y2="330" class="uses" marker-end="url(#tip)" />
+          <line x1="350" y1="230" x2="416" y2="446" class="uses" marker-end="url(#tip)" />
 
-        <!-- Column 2, x = 278. A stacked card: name, one sentence, then the machine fact on its
-             own bottom line. Three text levels plus the tag is the ceiling. -->
-        <g>
-          <rect x="278" y="228" width="190" height="84" rx="10" class="card-bg" />
-          <text x="373" y="253" class="title" text-anchor="middle">Driving it from a shell</text>
-          <rect x="355" y="260" width="36" height="2" class="rule" />
-          <text x="373" y="278" class="say" text-anchor="middle">Four commands, one lock file</text>
-          <text x="373" y="304" class="tag tag--hot" text-anchor="middle">init · sync · status · scan</text>
-        </g>
+          <line x1="600" y1="98" x2="656" y2="98" class="uses" marker-end="url(#tip)" />
+          <line x1="600" y1="330" x2="656" y2="330" class="uses" marker-end="url(#tip)" />
+          <line x1="600" y1="446" x2="656" y2="446" class="uses" marker-end="url(#tip)" />
+          <line x1="810" y1="330" x2="846" y2="330" class="uses" marker-end="url(#tip)" />
 
-        <!-- Uses, routed through the gutter at x = 490: out of the card, one corner, up or down
-             the gutter, one corner, into the next card. Never a diagonal, never across a card. -->
-        <path class="uses" marker-end="url(#tip-uses)" d="M468 270 H481 Q490 270 490 261 V139 Q490 130 499 130 H506" />
-        <path class="uses" marker-end="url(#tip-uses)" d="M468 270 H481 Q490 270 490 279 V349 Q490 358 499 358 H506" />
+          <!-- The stubs into the channel pill, in the 40px gap between two stacked blocks. -->
+          <line x1="510" y1="252" x2="510" y2="262" class="channel" />
+          <line x1="510" y1="282" x2="510" y2="292" class="channel" />
 
-        <!-- Column 3, x = 512: the stack of what the project does. Each card owns the space under
-             it, where its features hang. -->
-        <g>
-          <rect x="512" y="88" width="190" height="84" rx="10" class="card-bg" />
-          <text x="607" y="113" class="title" text-anchor="middle">Reading a repository</text>
-          <text x="607" y="138" class="say" text-anchor="middle">Turns a checkout into facts</text>
-          <text x="607" y="164" class="tag" text-anchor="middle">Python · ast · stdlib</text>
-        </g>
+          <!-- CARDS. Opaque fills, so they mask the lines that pass beneath them. Cocoon needs a
+               second backing rect here because its fills are semi-transparent; ours are not. -->
 
-        <!-- Features: what is inside that block, hanging off it. The spine leaves the card's
-             bottom-left at x = card + 24 and each feature is entered from the left, so a feature
-             is never crossed by the line reaching the one below it. -->
-        <path class="contains" marker-end="url(#tip)" d="M536 172 V194 Q536 202 544 202 H548" />
-        <path class="contains" marker-end="url(#tip)" d="M536 172 V230 Q536 238 544 238 H548" />
-        <path class="contains" marker-end="url(#tip)" d="M536 172 V266 Q536 274 544 274 H548" />
-        <g>
-          <rect x="554" y="188" width="148" height="28" rx="8" class="feature-bg" />
-          <text x="566" y="206" class="feature">Import graph</text>
-        </g>
-        <g>
-          <rect x="554" y="224" width="148" height="28" rx="8" class="feature-bg" />
-          <text x="566" y="242" class="feature">Entry points</text>
-        </g>
-        <g>
-          <rect x="554" y="260" width="148" height="28" rx="8" class="feature-bg" />
-          <text x="566" y="278" class="feature">Infrastructure found</text>
-        </g>
+          <!-- control — a person or program that drives the system, outside the boundary. -->
+          <g>
+            <rect x="20" y="162" width="110" height="76" rx="10" class="card-bg" />
+            <text x="75" y="186" class="title" text-anchor="middle">Developer</text>
+            <rect x="57" y="193" width="36" height="2" class="rule" />
+            <text x="75" y="207" class="say" text-anchor="middle">Runs the commands</text>
+          </g>
 
-        <g>
-          <rect x="512" y="316" width="190" height="84" rx="10" class="card-bg" />
-          <text x="607" y="341" class="title" text-anchor="middle">Installing in a project</text>
-          <text x="607" y="366" class="say" text-anchor="middle">Writes it in and remembers</text>
-          <text x="607" y="392" class="tag" text-anchor="middle">Python · hashlib · json</text>
-        </g>
-        <path class="contains" marker-end="url(#tip)" d="M536 400 V422 Q536 430 544 430 H548" />
-        <path class="contains" marker-end="url(#tip)" d="M536 400 V458 Q536 466 544 466 H548" />
-        <g>
-          <rect x="554" y="416" width="148" height="28" rx="8" class="feature-bg" />
-          <text x="566" y="434" class="feature">Lock file</text>
-        </g>
-        <g>
-          <rect x="554" y="452" width="148" height="28" rx="8" class="feature-bg" />
-          <text x="566" y="470" class="feature">Three-way sync</text>
-        </g>
+          <!-- A hub gets a taller card: up to three statement lines, 16 apart, then the tag. -->
+          <g>
+            <rect x="180" y="146" width="170" height="108" rx="10" class="card-bg" />
+            <text x="265" y="170" class="title" text-anchor="middle">Driving it from a shell</text>
+            <rect x="247" y="177" width="36" height="2" class="rule" />
+            <text x="265" y="191" class="say" text-anchor="middle">Installs the content</text>
+            <text x="265" y="207" class="say" text-anchor="middle">Keeps it in step</text>
+            <text x="265" y="223" class="say" text-anchor="middle">Reports what drifted</text>
+            <text x="265" y="243" class="tag tag--hot" text-anchor="middle">init · sync · status · scan</text>
+          </g>
 
-        <g>
-          <rect x="512" y="508" width="190" height="84" rx="10" class="card-bg card-bg--infra" />
-          <text x="607" y="533" class="title" text-anchor="middle">Checks on every change</text>
-          <text x="607" y="558" class="say" text-anchor="middle">141 tests on each change</text>
-          <text x="607" y="584" class="tag" text-anchor="middle">pytest · GitHub Actions</text>
-        </g>
+          <!-- capability — a stack of what the project does. Cards 76 tall, 40 apart. -->
+          <g>
+            <rect x="420" y="60" width="180" height="76" rx="10" class="card-bg" />
+            <text x="510" y="84" class="title" text-anchor="middle">Reading a repository</text>
+            <text x="510" y="105" class="say" text-anchor="middle">Reads the tree and imports</text>
+            <text x="510" y="125" class="tag" text-anchor="middle">Python · ast · stdlib</text>
+          </g>
 
-        <path class="uses" marker-end="url(#tip-uses)" d="M702 358 H740" />
+          <g>
+            <rect x="420" y="176" width="180" height="76" rx="10" class="card-bg" />
+            <text x="510" y="200" class="title" text-anchor="middle">Installing in a project</text>
+            <text x="510" y="221" class="say" text-anchor="middle">Writes the content in</text>
+            <text x="510" y="241" class="tag" text-anchor="middle">Python · hashlib · json</text>
+          </g>
 
-        <!-- Column 4, outside: a system this repository does not own. -->
-        <g>
-          <rect x="746" y="316" width="190" height="84" rx="10" class="card-bg card-bg--integration" />
-          <text x="841" y="341" class="title" text-anchor="middle">The coding agent</text>
-          <text x="841" y="366" class="say" text-anchor="middle">Reads the skills and follows</text>
-          <text x="841" y="392" class="tag" text-anchor="middle">Claude Code</text>
-        </g>
+          <!-- The channel two neighbours share, in the gap between them. -->
+          <rect x="440" y="262" width="140" height="20" rx="6" class="pill" />
+          <text x="510" y="276" class="tag tag--hot" text-anchor="middle">.specrun/lock.json</text>
 
-        <!-- Legend, in the clear space under the shortest column — never over the drawing. Kinds
-             are told apart by surface and stroke, never by inventing a second colour. -->
-        <g transform="translate(278, 400)">
-          <text x="0" y="0" class="meta">legend</text>
-          <rect x="0" y="12" width="16" height="10" rx="3" class="card-bg" />
-          <text x="24" y="21" class="meta">capability — what it does</text>
-          <rect x="0" y="28" width="16" height="10" rx="3" class="card-bg card-bg--infra" />
-          <text x="24" y="37" class="meta">infrastructure — how it runs</text>
-          <rect x="0" y="44" width="16" height="10" rx="3" class="card-bg card-bg--integration" />
-          <text x="24" y="53" class="meta">integration — outside</text>
-          <rect x="0" y="64" width="16" height="2" class="rule" />
-          <text x="24" y="69" class="meta">control — how it is driven</text>
-          <rect x="0" y="76" width="16" height="10" rx="4" class="feature-bg" />
-          <text x="24" y="85" class="meta">feature — inside a block</text>
-          <path class="contains" d="M0 100 L16 100" marker-end="url(#tip)" />
-          <text x="24" y="104" class="meta">contains</text>
-          <path class="uses" d="M0 116 L16 116" marker-end="url(#tip-uses)" />
-          <text x="24" y="120" class="meta">uses</text>
-        </g>
-      </svg>
+          <g>
+            <rect x="420" y="292" width="180" height="76" rx="10" class="card-bg" />
+            <text x="510" y="316" class="title" text-anchor="middle">Keeping content in step</text>
+            <text x="510" y="337" class="say" text-anchor="middle">Three-way, never clobbers</text>
+            <text x="510" y="357" class="tag" text-anchor="middle">sync · status</text>
+          </g>
+
+          <g>
+            <rect x="420" y="408" width="180" height="76" rx="10" class="card-bg" />
+            <text x="510" y="432" class="title" text-anchor="middle">Drawing the map</text>
+            <text x="510" y="453" class="say" text-anchor="middle">One self-contained page</text>
+            <text x="510" y="473" class="tag" text-anchor="middle">skill · no network</text>
+          </g>
+
+          <!-- infrastructure — what a block writes to or runs on. Named after what it actually
+               is, and short: a name and one mono line, no statement. Not every block has one. -->
+          <g>
+            <rect x="660" y="70" width="150" height="56" rx="10" class="card-bg card-bg--infra" />
+            <text x="735" y="94" class="title" text-anchor="middle">The scan report</text>
+            <text x="735" y="114" class="tag" text-anchor="middle">JSON on stdout</text>
+          </g>
+
+          <g>
+            <rect x="660" y="302" width="150" height="56" rx="10" class="card-bg card-bg--infra" />
+            <text x="735" y="326" class="title" text-anchor="middle">The skills folder</text>
+            <text x="735" y="346" class="tag" text-anchor="middle">.claude/skills/</text>
+          </g>
+
+          <g>
+            <rect x="660" y="418" width="150" height="56" rx="10" class="card-bg card-bg--infra" />
+            <text x="735" y="442" class="title" text-anchor="middle">The map file</text>
+            <text x="735" y="462" class="tag" text-anchor="middle">.specrun/map.html</text>
+          </g>
+
+          <!-- integration — a system this repository does not own, outside the boundary. -->
+          <g>
+            <rect x="850" y="292" width="130" height="76" rx="10" class="card-bg card-bg--integration" />
+            <text x="915" y="316" class="title" text-anchor="middle">The coding agent</text>
+            <text x="915" y="337" class="say" text-anchor="middle">Reads the skills</text>
+            <text x="915" y="357" class="tag" text-anchor="middle">Claude Code</text>
+          </g>
+
+          <!-- LEGEND, below every boundary and at least 20px clear of the lowest one. Inside a
+               boundary it reads as a component of the thing the boundary encloses. -->
+          <g>
+            <text x="155" y="548" class="meta">legend</text>
+            <rect x="155" y="558" width="16" height="10" rx="3" class="card-bg" />
+            <text x="179" y="567" class="meta">capability</text>
+            <rect x="260" y="558" width="16" height="10" rx="3" class="card-bg card-bg--infra" />
+            <text x="284" y="567" class="meta">infrastructure</text>
+            <rect x="388" y="558" width="16" height="10" rx="3" class="card-bg card-bg--integration" />
+            <text x="412" y="567" class="meta">integration</text>
+            <rect x="499" y="562" width="16" height="2" class="rule" />
+            <text x="523" y="567" class="meta">control</text>
+            <rect x="587" y="558" width="16" height="10" rx="3" class="pill" />
+            <text x="611" y="567" class="meta">channel</text>
+            <line x1="675" y1="563" x2="689" y2="563" class="uses" marker-end="url(#tip)" />
+            <text x="699" y="567" class="meta">uses</text>
+          </g>
+        </svg>
+      </div>
 
       <!-- Facts worth stating in words rather than drawing. Three cards, straight from the scan. -->
       <div class="cards">
@@ -413,7 +427,7 @@
         <section>
           <h2>Running and checking</h2>
           <ul>
-            <li>pytest <span>— 141 tests</span></li>
+            <li>pytest <span>— 161 tests</span></li>
             <li>.github/workflows/ci.yml <span>— on every pull request</span></li>
           </ul>
         </section>
@@ -426,9 +440,9 @@
     </div>
 
     <script>
-      // Export without a single external script: the SVG carries its own styles, so it can be
-      // serialised, drawn onto a canvas and handed over as a PNG. A CDN-loaded rasteriser would
-      // leave dead buttons the first time this file is opened on a plane.
+      // Export without a single external script. Cocoon loads html2canvas and jsPDF from a CDN;
+      // this file cannot, because it has to work from a download folder with no network. The SVG
+      // carries its own styles, so it can be serialised, drawn onto a canvas and handed over.
       function render(scale) {
         const svg = document.getElementById("map");
         const box = svg.viewBox.baseVal;
@@ -441,7 +455,7 @@
         canvas.width = box.width * scale;
         canvas.height = box.height * scale;
         const context = canvas.getContext("2d");
-        context.fillStyle = "#f7f4ed";
+        context.fillStyle = "#fbf9f4";
         context.fillRect(0, 0, canvas.width, canvas.height);
 
         return new Promise((resolve, reject) => {

@@ -42,19 +42,20 @@ repository", not `scan.py`; "Answering a question from documents", not `rag/`. A
 matches a directory name has usually skipped the thinking step — the reader can see directory
 names already, and what they cannot see is what those directories are *for*.
 
-Technologies belong in the third line of a card (`Python · argparse · stdlib`), never in a block
-name and never as a block of their own. A technology only becomes a block when it is a system
-outside this repository — a database, a payment provider, an API the code calls — and then it is
-an `integration`.
+That rule holds for `capability` and `control` blocks, and stops at `infrastructure` and
+`integration`. Those two are named after **what they actually are** — `The lock file`, `Postgres`,
+`The skills folder`, `S3` — because a queue called "holding work until later" helps nobody. A
+technology in a `capability` name is still a mistake; a technology *as* an infrastructure node is
+the point of drawing one.
 
 ### The budget
 
-Up to **9 blocks at the top level**, up to **7 children** under any one block, **3 levels** deep
-counting the project itself: the project names the page, the blocks are the columns, the features
-hang off the blocks.
+Up to **9 blocks at the top level**, up to **7 children** — infrastructure nodes — hanging off any
+one block, **3 levels** deep counting the project itself: the project names the page, the blocks
+are the drawing, and each one's infrastructure hangs off it.
 
 These are not arbitrary: a map with thirty boxes is read as a wall and closed. When something
-does not fit, group it rather than lengthening the row — three siblings that share a purpose
+does not fit, group it rather than adding a box — three siblings that share a purpose
 become one block with three children, and the map gets easier to read instead of longer.
 
 ### The project is not a box
@@ -70,18 +71,38 @@ give a newcomer.
 
 | Kind | What it is | How it is drawn |
 |---|---|---|
-| `capability` | something the project does for its users | card fill, solid border |
-| `infrastructure` | how it is built, run, tested, deployed | quieter `bg` fill, solid border — reads recessed against the panel |
-| `integration` | a system outside this repository | dashed border, drawn outside the boundary |
+| `capability` | something the project does for its users | `card` fill, solid border |
 | `control` | how a person or another program drives it — CLI, HTTP entry, schedule | solid border, short orange rule under the title |
-| `feature` | something inside a block, at the second level | smaller card, 148 wide, one line of text, no tag |
+| `infrastructure` | what a block runs on or writes to — a file, a folder, a queue, a table, a container | quieter `bg` fill, short card, no statement |
+| `integration` | a system outside this repository | dashed border, drawn outside the boundary |
+| `channel` | what two neighbouring blocks pass between them — a file, a topic, a queue | small pill, orange border, in the gap between them |
 
-Kinds are told apart by surface, border, size and label — never by inventing new colours. The
-palette has one accent on purpose, and a second saturated hue is what breaks the look fastest.
+Kinds are told apart by surface, border and size — never by inventing new colours. This is the one
+place the design departs hardest from the work it is based on, which colour-codes every component
+type. The palette has one accent on purpose, and a second saturated hue is what breaks the look
+fastest.
 
-### The stack inside a top-level card
+### Infrastructure is a node, not a footnote
 
-A top-level card is a stack of at most four lines, and the order is fixed:
+This is the part most easily got wrong. What a block **runs on or writes to** gets its own card,
+above or below that block, on a straight vertical arrow: the lock file, the state database, the
+queue, the bucket, the container image. It is a short card — name and one mono line, no statement.
+
+Burying those in the tag line of a capability card loses the shape of the system. A reader can see
+that the installer writes something; what they cannot see is *what*, and that a second block reads
+the same file.
+
+Two things stop this becoming a wall: only draw infrastructure a block genuinely touches at
+runtime, and let the three summary cards carry the rest. Test runners, CI files and release
+channels almost always belong there rather than in a box — nothing in the drawing uses them.
+
+When the thing is *between* two neighbouring blocks rather than owned by one — a queue they both
+speak to, a file one writes and the next reads — draw it as a **channel pill** in the gap between
+them instead, joined to each by a short dashed stub.
+
+### The stack inside a card
+
+A card is a stack of at most four kinds of line, and the order is fixed:
 
 1. **name** — sans 12.5/600, centred. What the block does, in the language of the task.
 2. **orange rule** — 36×2, `control` only, directly under the name.
@@ -90,22 +111,26 @@ A top-level card is a stack of at most four lines, and the order is fixed:
    itself (`Python · ast · stdlib`, `init · sync · status · scan`, `:8080`). `faint` by default;
    `--hot` (orange) on the one or two cards where the reader should stop.
 
-A card with nothing to put in the tag line is shorter (76 instead of 84) rather than padded. A
-fifth line has nowhere to go — that is what the feature nodes below the card are for.
+A hub — the one block everything goes through — may carry up to three statement lines, 16 apart,
+which is what makes it visibly the hub without a colour or a size trick. A card with nothing to
+put in the tag line simply ends earlier rather than being padded to a standard height.
 
-### Two kinds of edge
+An `infrastructure` card is half of that: name, then one mono line. No statement — its name is
+already the statement.
 
-- **contains** — a dark thin elbow with an arrowhead, from a block down to a feature inside it.
-  Vertical, short, and always entering the feature from its left edge.
-- **uses** — an orange dotted line with a small arrowhead: this block calls that one. This is the
-  left-to-right spine of the map and the thing a reader follows first. Take these from the import
-  graph, and draw only the ones a reader needs; a map with an edge for every import is a
-  dependency graph, which is a different and much less useful picture.
+### Two strokes
 
-Two kinds is the whole budget. If you find yourself wanting a third line style for "sends events
-to" or "reads from", put that in the card's statement instead — words are cheaper than a legend
-nobody can hold in their head. And keep the arrows meaning *uses*: if they start reading as data
-flowing through a pipeline, the map has quietly turned into a sequence diagram.
+- **uses** — a solid dark line with an arrowhead: this block uses that one. **Any angle.** A fan of
+  four straight diagonals out of a hub into a stack is the normal picture, not a failure to line
+  things up; leave the block at slightly different heights so the lines stay apart where they
+  start.
+- **channel** — a short dashed grey stub, no arrowhead, joining a block to a channel pill in the
+  gap below it.
+
+Two is the budget. If you find yourself wanting a third for "sends events to" or "reads from", put
+that in the card's statement instead — words are cheaper than a legend nobody can hold in their
+head. Take the edges from the import graph, and draw only the ones a reader needs; a map with an
+edge for every import is a dependency graph, which is a different and much less useful picture.
 
 ### What does not go on the map
 
@@ -117,77 +142,91 @@ which is what they are for.
 ## 3. Draw it
 
 Copy `assets/template.html` and edit it. It is a complete worked example with real coordinates,
-which is far easier to adapt than a description of coordinates would be. Keep its geometry and
-replace its content.
+which is far easier to adapt than a description of coordinates would be.
 
-The map **reads left to right**: who drives it, then what it does, then what it writes to. Each
-column is a vertical stack of cards, and the whole thing sits on one panel with a faint grid. Grow
-`H` in `viewBox="0 0 1000 H"` to fit the tallest column; leave the width alone.
+**Its numbers are for its content, not for yours.** There is no fixed grid here: no column
+positions to snap to, no row pitch, no standard card height. Place each block where this system's
+shape wants it and let the sizes below be starting points. What has to hold is the spacing rules
+and the drawing order — those are what keep a map from overlapping itself.
 
-| Measure | Value |
+### Sizes to start from
+
+| Thing | Size |
 |---|---|
-| Panel | x=12, y=12, w=976, rx=12, faint 80px grid clipped to it |
-| Columns | x = 44, 278, 512, 746 — four of them, 190 wide, 44 apart |
-| Gutters, where vertical runs belong | the middle of each gap: x = 256, 490, 724 |
-| Top-level card | 190 × 84 (× 76 with no tag line), `rx="10"`, border `1.5px` |
-| Feature card | 148 × 28, `rx="8"`, at `columnX + 42` — flush with the card's right edge |
-| Feature spine | leaves the card's bottom at `columnX + 24` |
-| First feature top | 16 below the card; feature pitch 36 |
-| Gap under a block's last feature | 28 before the next card in the column |
-| Boundary inset | 28 left of the first column inside it, 18 right of the last |
-| Elbow corner radius | 9 on `uses`, 8 on the feature spine, drawn as quadratic curves |
-| Arrow stops short of a card | 6px |
+| viewBox | `0 0 1000 H` to start; grow either dimension to fit |
+| Standard block | 180 × 76 — name, one statement, one tag |
+| Hub block | 170 × 108 — name, three statements, one tag |
+| Small block, e.g. an actor | 110 × 76 |
+| `infrastructure` block | 150 × 56 — name and one mono line |
+| `channel` pill | 140 × 20, `rx="6"` |
+| Corner radius | `rx="10"` on blocks, `12` on the boundary |
+| Border | `1.5px` everywhere |
 
-Four columns is what fits; three or two is common and fine — spread the columns out rather than
-leaving a hole. A column with one card in it is a legitimate column.
+Inside a block: name at `y + 24` (sans 12.5/600), the `control` rule at `y + 31`, the first
+statement at `y + 45` and each next 16 lower, the tag 20 below the last statement. An
+`infrastructure` block is name at `y + 24`, mono at `y + 44`. All of it centred.
 
-**Features hang off their parent, never between two blocks.** The spine drops from the parent's
-bottom-left and each feature is entered from its *left* edge, so the line reaching the third
-feature never crosses the first two. Each feature is one line of sans 11 — no statement, no tag.
-If a feature needs a sentence, it is a block, not a feature.
+### Spacing rules
+
+These are the ones to obey rather than adapt, because breaking them produces a map that looks
+almost right:
+
+- **Minimum vertical gap between stacked blocks: 40.** That gap is also exactly where a channel
+  pill goes — a 20-tall pill centred in it, with 10px of dashed stub above and below.
+- **Minimum horizontal gap between columns: 40**, and 60 where an arrow has to carry an arrowhead
+  comfortably.
+- **Boundary padding: at least 25** around the outermost block it holds.
+- **Legend goes below every boundary, at least 20 clear of the lowest one.** Inside a boundary it
+  reads as one of the components that boundary encloses. Grow the viewBox to make room rather than
+  tucking it into a margin.
+
+### Drawing order
+
+SVG paints in document order, and the whole layering of the map depends on it:
+
+1. the grid pattern,
+2. the boundary rectangles and their labels,
+3. **every arrow**,
+4. every card,
+5. the legend.
+
+Arrows before cards is the rule that matters. Drawn in that order, a line that has to pass under a
+block disappears cleanly beneath it, because our cards have opaque fills. Draw the cards first and
+the same line runs straight across a name.
+
+(The work this is based on needs a second, opaque backing rectangle under every box for this to
+work, because its fills are semi-transparent. Ours are not, so one rect per card is enough.)
 
 **SVG does not wrap text**, so a line that is too long does not reflow — it runs out of the card
-and over whatever is beside it, and nothing in the markup looks wrong. The cards are centred, so
-an overflow spills out of *both* sides. Count characters against these ceilings before writing
-them, and cut words rather than shrinking the font:
+and over whatever is beside it, and nothing in the markup looks wrong. The text is centred, so an
+overflow spills out of *both* sides. Divide the usable width by the character width before writing
+a line, and cut words rather than shrinking the font:
 
-| Line | Ceiling |
-|---|---|
-| name, sans 12.5/600 | 24 characters |
-| statement, sans 11 | 28 characters |
-| tag, mono 9.5 | 28 characters, separated by ` · ` |
-| feature, sans 11 | 20 characters |
-| boundary label, mono 10.5 | 34 characters |
+| Line | Character width | On a 180-wide block |
+|---|---|---|
+| name, sans 12.5/600 | ≈ 6.9 | 23 characters |
+| statement, sans 11 | ≈ 5.5 | 29 characters |
+| tag, mono 9.5 | ≈ 5.7 | 28 characters, separated by ` · ` |
 
-`Pydantic AI · asyncio · shared runtime` is 38 and overflows the tag line;
+`Pydantic AI · asyncio · shared runtime` is 38 and overflows a 180-wide tag line;
 `Pydantic AI · asyncio` fits and the rest belongs in the statement.
 
-Three mistakes are worth checking for by eye, because all three look fine in the markup:
-
-- **a connector crossing a card.** Horizontal `uses` runs at card mid-height, vertical runs belong
-  in the gutters. If an edge cannot get where it is going without crossing something, the
-  arrangement is wrong, not the edge — reorder the columns so that related blocks are neighbours.
-- **features colliding with the next card down.** A block with four features is 160px taller than
-  one with none; the column below it has to move down, not overlap.
-- **the legend sitting on top of the drawing.** It goes in the clear space under the shortest
-  column, and its longest label has to end before the next column starts. If there is no clear
-  space, grow the viewBox rather than tucking it into a margin.
-
 Do not add web fonts, CDN scripts or external images. The map has to open from a double click,
-from any folder, with no network — that is the whole reason it is one file. The export buttons in
-the template rasterise the inline SVG on a plain canvas for exactly this reason, so leave the
-`<style>` block inside the `<svg>` where it is: serialising the SVG is what makes Copy and PNG
-work, and styles defined outside it would be lost.
+from any folder, with no network — that is the whole reason it is one file, and it is the one
+place this skill deliberately does less than the work it is based on, which loads a rasteriser and
+a PDF library from a CDN. The export buttons here rasterise the inline SVG on a plain canvas
+instead, so leave the `<style>` block inside the `<svg>` where it is: serialising the SVG is what
+makes Copy and PNG work, and styles defined outside it would be lost.
 
 ## 4. Two modes
 
-**Overview** is the default: the columns and the boundary, no features. It is what somebody asking
-"what is this repo" wants, and it fits on a screen.
+**Overview** is the default: the blocks, the boundary, and the infrastructure they actually touch.
+It is what somebody asking "what is this repo" wants, and it fits on a screen.
 
 **Detail** is for a request that asks for it — "show me what's inside the agent loop", "expand
-the ingestion side". Hang features under the blocks that were asked about and leave the other
-columns bare. Every block carrying features at once produces the thirty-box wall the budget exists
-to prevent, and it makes the columns wildly different heights.
+the ingestion side". Split the block that was asked about into two or three neighbouring blocks
+and give them their own infrastructure; leave the rest of the drawing as it was. Expanding
+everything at once produces the thirty-box wall the budget exists to prevent.
 
 ## 5. Save and open it
 
@@ -208,8 +247,13 @@ still render perfectly:
   systems drawn beyond it?
 - do the arrows read as *uses*, or have they started to read as data flowing through a pipeline?
 - does every block trace back to something in the scan or to a file you actually opened?
-- does anything overlap: a line across a card, features running into the card below them, the
-  legend over a node, text past a card's edge?
+- is the infrastructure a reader would ask about actually drawn — the file it writes, the database
+  it reads — rather than buried in a tag line?
+- does anything overlap: text past a card's edge, two blocks closer than 40 apart, a channel pill
+  touching the block above it?
+- is the legend below every boundary rather than sitting inside one?
+- did the arrows get drawn before the cards, so the ones that pass beneath a block disappear under
+  it instead of crossing its name?
 
 ---
 

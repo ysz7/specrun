@@ -272,53 +272,63 @@ to the focused card) and tight at the bottom (20 between stacked children); junc
 below a parent. That arrangement suited an interactive tree with one node in focus at a time.
 
 **The shipped map's** is different, and deliberately so: it is a static picture, read once, by
-somebody who has never been here. It reads **left to right** on a bordered panel — who drives the
-system, then what the system does, then what it writes to — with a dashed boundary around the part
-this repository owns. `design/media/map-example.png` still shows the old column and is due a
-redraw.
+somebody who has never been here. It is a **freely placed drawing** on a bordered canvas — no fixed
+grid, no column positions, no row pitch — with a dashed boundary around the part this repository
+owns, arrows at whatever angle they need, and a legend below every boundary. What holds it together
+is a set of spacing rules rather than a template of coordinates. `design/media/map-example.png`
+still shows the old column and is due a redraw.
 
 ```
-  ╭─ panel, faint 80px grid ───────────────────────────────────────────╮
-  │            ┌╴ Your project checkout ╶╴╴╴╴╴╴╴╴╴╴╴╴╴╴╴╴┐             │
-  │            ╷                        ┌──────────────┐ ╷             │
-  │            ╷                        │ Block        │ ╷             │
-  │            ╷                    ╭──▸│ statement    │ ╷             │
-  │ ┌────────┐ ╷ ┌──────────────┐   │   │ tag          │ ╷             │
-  │ │ Person │ ╷ │ Control      │   │   └──────┬───────┘ ╷             │
-  │ │ ─────  │─┼▸│ statement    │───╯          ├─▸[ feature ]          │
-  │ │ stmt   │ ╷ │ tag          │              ╰─▸[ feature ]          │
-  │ └────────┘ ╷ └──────────────┘   ╮   ┌──────────────┐ ╷ ┌─────────┐ │
-  │            ╷   legend           ╰──▸│ Block        │─┼▸┆ outside ┆ │
-  │            ╷                        └──────────────┘ ╷ └─────────┘ │
-  │            └╴╴╴╴╴╴╴╴╴╴╴╴╴╴╴╴╴╴╴╴╴╴╴╴╴╴╴╴╴╴╴╴╴╴╴╴╴╴╴╴╴┘             │
-  ╰────────────────────────────────────────────────────────────────────╯
+  ╭─ canvas, faint 40px grid ────────────────────────────────────────────╮
+  │        ┌╴Your project checkout ╶╴╴╴╴╴╴╴╴╴╴╴╴╴╴╴╴╴╴╴╴╴╴╴╴╴┐           │
+  │        ╷       ╭──▸┌──────────┐──▸┌──────────┐          ╷           │
+  │        ╷      ╱    │ Block    │   │ infra    │          ╷           │
+  │ ┌────┐ ╷ ┌────────┐└──────────┘   └──────────┘          ╷           │
+  │ │ ── │ ╷ │ Hub    │───▸┌──────────┐                     ╷           │
+  │ │stmt│▸╷ │ stmt×3 │╲   └──────────┘                     ╷           │
+  │ └────┘ ╷ │ tag    │ ╲   ( channel )    ← in the 40 gap  ╷           │
+  │        ╷ └────────┘  ╲ ┌──────────┐──▸┌──────────┐──────┼──▸┌─────┐ │
+  │        ╷              ▸│ Block    │   │ infra    │      ╷   ┆ ext ┆ │
+  │        ╷               └──────────┘   └──────────┘      ╷   └─────┘ │
+  │        └╴╴╴╴╴╴╴╴╴╴╴╴╴╴╴╴╴╴╴╴╴╴╴╴╴╴╴╴╴╴╴╴╴╴╴╴╴╴╴╴╴╴╴╴╴╴╴╴┘           │
+  │  legend  ▫ capability  ▫ infrastructure  ▫ integration  ▬ control    │
+  ╰──────────────────────────────────────────────────────────────────────╯
 ```
 
-### Metrics
+### Sizes and rules
 
 | Measure | Value |
 |---|---|
-| viewBox | `0 0 1000 H`, width fixed, height grown to fit |
-| Panel | x=12, y=12, w=976, rx=12, `paper` fill, `line` border, 80px grid at 45% opacity |
-| Columns | x = 44, 278, 512, 746 — 190 wide, 44 apart |
-| Top-level card | 190 × 84, or × 76 with no tag line |
-| Feature card | 148 × 28, rx 8, at `columnX + 42` |
-| Feature spine | `columnX + 24`; first feature 16 below the card, pitch 36 |
-| Gap under the last feature | 28 |
-| Boundary | dashed `7 5` in `line`, inset 28 left / 18 right of the columns it holds |
-| Elbow corner radius | 9 on `uses`, 8 on the feature spine |
-| Arrow stops short of a card | 6 |
+| viewBox | `0 0 1000 H` to start, grown in either direction |
+| Canvas | a CSS div — `paper` fill, `line` border, radius 14, `overflow-x: auto`; the SVG inside carries `min-width: 900px` so a narrow window scrolls rather than shrinks |
+| Grid | 40px, `line-soft` at 0.75 width and 60% opacity, filling the whole SVG |
+| Standard block | 180 × 76 · hub 170 × 108 · actor 110 × 76 · infrastructure 150 × 56 |
+| Channel pill | 140 × 20, radius 6, `orange` border, centred in the gap |
+| Radius / border | 10 on blocks, 12 on the boundary; 1.5px stroke throughout |
+| Minimum gaps | 40 vertical between stacked blocks, 40 horizontal (60 where an arrow needs room), 25 boundary padding |
+| Legend | below every boundary, ≥20 clear of the lowest |
 
-Card text is centred and stacked: name (sans 12.5/600) at `y + 25`, the `control` rule at `y + 32`,
-statement (sans 11 `sub`) at `y + 50`, tag (mono 9.5, `faint` or `orange`) at `y + 76`. That fourth
-line is the one addition the shipped map makes to the prototype's three-level ceiling, and it only
-works because it is machine facts in mono, visibly a different register from the sentence above it.
+Card text is centred and stacked: name (sans 12.5/600) at `y + 24`, the `control` rule at `y + 31`,
+statements (sans 11 `sub`) at `y + 45` and every 16 below, tag (mono 9.5, `faint` or `orange`) 20
+under the last statement. An infrastructure card is name at `y + 24` and mono at `y + 44`, because
+its name is already the whole statement. That fourth line is the one addition the shipped map makes
+to the prototype's three-level ceiling, and it only works because it is machine facts in mono,
+visibly a different register from the sentence above it.
+
+Drawing order carries the layering and is not cosmetic: grid, boundaries, **every arrow**, then
+every card, then the legend. Our fills are opaque, so an arrow drawn before the cards passes
+cleanly beneath them — which is why the source this borrows from needs a second backing rectangle
+under each box and this one does not.
 
 Two changes from the prototype are worth stating plainly, because both contradict rules written
 above and both were chosen:
 
 - **The apex card is gone.** The project's name is the page heading; the boundary label says what
   the enclosed part is. A card that only repeats the title costs a row.
+- **There is one connector, not two.** The prototype paired a dark arrowed elbow (structure) with
+  an orange dotted line (sequence). A picture with no selected node and no ordering has no use for
+  the second: every arrow here means *uses*, and what a node is comes from its surface and its
+  position instead. The orange is spent on the `control` rule and the one or two hot tags.
 - **There is a panel and a grid.** The prototype had neither — "no grid, no frame, no panels" was
   true of it. A static picture that will be exported to PNG and pasted into a document needs an
   edge; a floating column on paper does not read as a diagram once it leaves the app.

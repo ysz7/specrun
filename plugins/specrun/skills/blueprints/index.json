@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "content_version": "0.3.0",
+  "content_version": "0.3.1",
   "blueprints": [
     {
       "id": "a2a-agent-to-agent",
