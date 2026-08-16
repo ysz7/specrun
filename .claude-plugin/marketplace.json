@@ -5,13 +5,13 @@
   },
   "metadata": {
     "description": "Blueprints and skills for the AI you already code with",
-    "version": "0.1.0"
+    "version": "0.2.0"
   },
   "plugins": [
     {
       "name": "specrun",
       "source": "./plugins/specrun",
-      "description": "Architectural blueprints your AI picks up on its own, a skill that writes new ones from work you have just done, and an architecture map of the project.",
+      "description": "52 architectural blueprints your AI picks up on its own, skills for building agents, RAG and evals, a skill that writes new blueprints from work you have just done, and an architecture map of the project.",
       "category": "workflow",
       "keywords": ["architecture", "blueprints", "documentation", "map"]
     }
