@@ -2,7 +2,7 @@
 id = "tool-design"
 title = "Tool design"
 use_when = "An agent has more than one tool and picks the wrong one, sends malformed arguments, or misreads what a tool returned; tool schemas, descriptions and return shapes are being written or reworked"
-pack = "ai-agents"
+pack = "agent core"
 verified_at = 2026-08-12
 stale_after = "90d"
 +++
@@ -147,7 +147,7 @@ The rule: every error tells the model **whether to retry** and **what to change*
 
 | Knob | Default | Effect | Change it when |
 |---|---|---|---|
-| Tools per agent | ≤ 15 | Selection accuracy degrades with count | Split by [routing](../workflows/routing.md) or sub-agents past ~20 |
+| Tools per agent | ≤ 15 | Selection accuracy degrades with count | Split by [routing](routing.md) or sub-agents past ~20 |
 | Response budget | 2 000 tokens | Context pressure | Lower with parallel calls; raise for whole-file reads |
 | Default `limit` | 20 | Result size | Match to typical need, not max capability |
 | Identifier format | human-readable | Model can reason about it | Prefer `order_2026_00412` over a raw UUID |
@@ -193,8 +193,8 @@ The rule: every error tells the model **whether to retry** and **what to change*
 | v0 | — | 3–5 hand-written tools, plain descriptions |
 | v1 | Selection errors appear | Enums, `additionalProperties:false`, "do not use for" clauses |
 | v2 | Context pressure | Response formatting, pagination, truncation contracts |
-| v3 | > 15 tools | Namespacing, sub-agents with disjoint toolsets, [routing](../workflows/routing.md) |
-| v4 | Multi-team ownership | Tools behind [MCP servers](../mcp/mcp-tool-design.md) with versioned schemas |
+| v3 | > 15 tools | Namespacing, sub-agents with disjoint toolsets, [routing](routing.md) |
+| v4 | Multi-team ownership | Tools behind [MCP servers](mcp-tool-design.md) with versioned schemas |
 
 ## 12. Build checklist
 
@@ -213,5 +213,5 @@ The rule: every error tells the model **whether to retry** and **what to change*
 
 - [agent-loop.md](agent-loop.md) — where tools are dispatched
 - [context-engineering.md](context-engineering.md) — budgeting the tokens tools consume
-- [../../MCP/architecture/mcp-tool-design.md](../mcp/mcp-tool-design.md) — the same rules across a process boundary
-- [../../Evaluation and Testing/architecture/agent-trajectory-eval.md](../evaluation/agent-trajectory-eval.md) — measuring selection accuracy
+- [mcp-tool-design.md](mcp-tool-design.md) — the same rules across a process boundary
+- [agent-trajectory-eval.md](agent-trajectory-eval.md) — measuring selection accuracy

@@ -28,6 +28,13 @@ CONTENT = content_root()
 #: the two fields that decide whether a skill is ever reached are checked, and by line.
 FRONTMATTER_FIELD = re.compile(r"^(?P<name>[a-z-]+):\s*(?P<value>.+)$")
 
+MARKDOWN_LINK = re.compile(r"\[([^\]]*)\]\(([^)\s]+)\)")
+
+#: A path in backticks: how the skills point at a blueprint, since prose in a skill is read by a
+#: model rather than rendered. Only paths with a separator are checked — a bare `notes.md` in an
+#: example is a file the reader is being told to create, not one that is meant to exist here.
+QUOTED_PATH = re.compile(r"`([\w./-]*/[\w./-]*\.(?:md|html|json))`")
+
 
 def skill_dirs() -> list[Path]:
     return sorted(d for d in CONTENT.iterdir() if (d / paths.SKILL_FILE_NAME).is_file())
@@ -92,6 +99,29 @@ def test_every_bundled_blueprint_parses_and_is_named_after_its_id() -> None:
         # The installed copy is written to `<id>.md`, so an id that disagrees with the file name
         # here would quietly rename the blueprint on its way into a project.
         assert blueprint.id == path.stem
+
+
+def test_no_shipped_file_points_at_a_path_that_does_not_ship() -> None:
+    # Blueprints and skills arrive from a library with a deeper folder layout than the flat one
+    # they are installed into, and a reference that survived the move points at nothing. Nothing
+    # reports it: the model follows the path, finds no file, and carries on from memory — which
+    # is the failure this whole mechanism exists to avoid.
+    missing = []
+    for path in sorted(CONTENT.rglob("*.md")):
+        text = path.read_text(encoding="utf-8")
+        targets = [target for _label, target in MARKDOWN_LINK.findall(text)]
+        targets += QUOTED_PATH.findall(text)
+        for target in targets:
+            if target.startswith(("http://", "https://", "#", "mailto:", "/")):
+                continue
+            # `.specrun/map.html`, `.claude/skills/...`: paths in a project the skill writes to,
+            # which are rooted at that project and not at the file naming them.
+            if target.startswith(".") and not target.startswith(("./", "../")):
+                continue
+            if not (path.parent / target.split("#")[0]).exists():
+                missing.append(f"{path.relative_to(CONTENT)} → {target}")
+
+    assert not missing, "shipped files point at paths that do not exist:\n" + "\n".join(missing)
 
 
 def test_the_map_skill_states_the_budget_that_keeps_a_map_readable() -> None:

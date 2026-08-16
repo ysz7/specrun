@@ -2,7 +2,7 @@
 id = "agent-loop"
 title = "Agent loop"
 use_when = "Building the loop that calls a model, runs the tools it asks for and repeats until it stops; or an agent runs away, loops, or will not stop on its own"
-pack = "ai-agents"
+pack = "agent core"
 verified_at = 2026-08-12
 stale_after = "90d"
 +++
@@ -13,7 +13,7 @@ stale_after = "90d"
 
 **Tier:** foundational
 **Use when:** the number of steps is unknown at design time; the model must decide what to do next based on what it just learned; the task has a verifiable end state.
-**Avoid when:** the steps are fixed and known — use [prompt chaining](../workflows/prompt-chaining.md), which is cheaper, faster, and debuggable.
+**Avoid when:** the steps are fixed and known — use [prompt chaining](prompt-chaining.md), which is cheaper, faster, and debuggable.
 **Cost profile:** N+1 LLM calls for N tool calls. Context grows monotonically. p95 latency is unbounded without a step cap.
 
 ---
@@ -210,7 +210,7 @@ def run_agent(user_input: str, tools: dict[str, Tool], cfg: AgentConfig,
 | v0 — bare loop | — | Loop + 3–5 tools + step cap |
 | v1 — governed | Cost or latency complaints | Budgets, truncation, loop detection, structured tracing |
 | v2 — context-managed | Tasks exceed one context window | [Compaction, memory files, sub-agents](context-engineering.md) |
-| v3 — decomposed | > 20 tools, or distinct task families | [Routing](../workflows/routing.md) → [orchestrator-workers](../workflows/orchestrator-workers.md) |
+| v3 — decomposed | > 20 tools, or distinct task families | [Routing](routing.md) → [orchestrator-workers](orchestrator-workers.md) |
 | v4 — supervised | Actions have real-world consequences | [Human-in-the-loop gates](human-in-the-loop.md), sandboxing, audit log |
 
 ## 12. Build checklist
@@ -230,6 +230,6 @@ def run_agent(user_input: str, tools: dict[str, Tool], cfg: AgentConfig,
 
 - [tool-design.md](tool-design.md) — the single highest-leverage change to loop quality
 - [context-engineering.md](context-engineering.md) — what to do when history stops fitting
-- [prompt-chaining.md](../workflows/prompt-chaining.md) — the cheaper option when steps are fixed
+- [prompt-chaining.md](prompt-chaining.md) — the cheaper option when steps are fixed
 - [human-in-the-loop.md](human-in-the-loop.md) — gating irreversible actions
-- [../../Evaluation and Testing/architecture/agent-trajectory-eval.md](../evaluation/agent-trajectory-eval.md) — grading the loop
+- [agent-trajectory-eval.md](agent-trajectory-eval.md) — grading the loop

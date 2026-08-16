@@ -2,7 +2,7 @@
 id = "rag-baseline"
 title = "RAG baseline"
 use_when = "Answers have to come from a document corpus the model was not trained on, the corpus changes, or answers must cite their sources; retrieval is being set up, or the model hallucinates and cannot attribute what it says"
-pack = "ai-agents"
+pack = "retrieval"
 verified_at = 2026-08-12
 stale_after = "90d"
 +++
@@ -230,4 +230,4 @@ def answer(question: str, tenant_id: str, store, embedder, k: int = 8) -> RAGAns
 - [reranking.md](reranking.md) — turning recall into precision
 - [rag-evaluation.md](rag-evaluation.md) — build this before v1
 - [vector-store-selection.md](vector-store-selection.md) — picking the store
-- [../../Data Pipelines/architecture/ingestion-pipeline.md](../data/ingestion-pipeline.md) — the indexing side at scale
+- [ingestion-pipeline.md](ingestion-pipeline.md) — the indexing side at scale

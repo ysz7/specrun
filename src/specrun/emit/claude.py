@@ -32,16 +32,41 @@ ROUTER_DESCRIPTION_TEMPLATE = (
 )
 
 
+#: Above this many blueprints the description names packs instead of every title. The description
+#: is the one part of the skill that sits in the model's context permanently, so it has to stay
+#: readable as a sentence; fifty titles is a list nobody parses, and the extra precision buys
+#: nothing — the titles are all in the table one file away, and the table is what does the
+#: choosing once the router has fired.
+TITLE_LIMIT = 12
+
+
 def description(blueprints: Sequence[Blueprint]) -> str:
     """The frontmatter description, naming the blueprints that are actually installed."""
-    titles = [b.title.lower() for b in sorted(blueprints, key=lambda b: b.id)]
-    if not titles:
-        topics = "no blueprints yet"
-    elif len(titles) == 1:
-        topics = titles[0]
-    else:
-        topics = ", ".join(titles[:-1]) + " and " + titles[-1]
-    return ROUTER_DESCRIPTION_TEMPLATE.format(topics=topics)
+    return ROUTER_DESCRIPTION_TEMPLATE.format(topics=_join(topics(blueprints)))
+
+
+def topics(blueprints: Sequence[Blueprint]) -> list[str]:
+    """What the description says the router covers: titles, or packs once there are many.
+
+    A blueprint with no pack — every local one, unless its author chose to give it a pack — is
+    named by its own title however long the list is. Otherwise a project's own blueprint would
+    disappear from the description, and the description is the only thing that decides whether
+    the router is opened at all.
+    """
+    ordered = sorted(blueprints, key=lambda b: b.id)
+    if len(ordered) <= TITLE_LIMIT:
+        return [b.title.lower() for b in ordered]
+
+    labels = {b.pack or b.title.lower() for b in ordered}
+    return sorted(labels, key=str.lower)
+
+
+def _join(topics: Sequence[str]) -> str:
+    if not topics:
+        return "no blueprints yet"
+    if len(topics) == 1:
+        return topics[0]
+    return ", ".join(topics[:-1]) + " and " + topics[-1]
 
 
 def emit(blueprints: Sequence[Blueprint], skills: Sequence[Skill] = ()) -> dict[str, str]:

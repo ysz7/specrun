@@ -3,11 +3,353 @@
   "content_version": "0.1.0",
   "blueprints": [
     {
+      "id": "a2a-agent-to-agent",
+      "path": "blueprints/a2a-agent-to-agent.md",
+      "title": "Agent-to-agent (A2A)",
+      "use_when": "Handing an outcome to an autonomous agent you do not own — another team's or another company's — by specifying the goal rather than the call",
+      "pack": "agent protocols",
+      "verified_at": "2026-08-12",
+      "stale_after": "90d"
+    },
+    {
+      "id": "ag-ui-frontend-streaming",
+      "path": "blueprints/ag-ui-frontend-streaming.md",
+      "title": "AG-UI frontend streaming",
+      "use_when": "The interface has to show what the agent is doing while it works: tokens, tool calls, thinking traces, interruptions",
+      "pack": "agent protocols",
+      "verified_at": "2026-08-12",
+      "stale_after": "90d"
+    },
+    {
       "id": "agent-loop",
       "path": "blueprints/agent-loop.md",
       "title": "Agent loop",
       "use_when": "Building the loop that calls a model, runs the tools it asks for and repeats until it stops; or an agent runs away, loops, or will not stop on its own",
-      "pack": "ai-agents",
+      "pack": "agent core",
+      "verified_at": "2026-08-12",
+      "stale_after": "90d"
+    },
+    {
+      "id": "agent-protocols-overview",
+      "path": "blueprints/agent-protocols-overview.md",
+      "title": "Agent protocols overview",
+      "use_when": "Choosing which wire protocol fits — tools, agent-to-agent delegation, frontend streaming — when an agent has to talk to something outside its own process",
+      "pack": "agent protocols",
+      "verified_at": "2026-08-12",
+      "stale_after": "90d"
+    },
+    {
+      "id": "agent-trajectory-eval",
+      "path": "blueprints/agent-trajectory-eval.md",
+      "title": "Agent trajectory evaluation",
+      "use_when": "Grading the path a multi-step agent took — which tools it chose, in what order, how it recovered from errors and what it cost — not only its final answer",
+      "pack": "evaluation",
+      "verified_at": "2026-08-12",
+      "stale_after": "90d"
+    },
+    {
+      "id": "agentic-rag",
+      "path": "blueprints/agentic-rag.md",
+      "title": "Agentic RAG",
+      "use_when": "One retrieval pass is not enough: the agent has to search, judge what came back and search again, across several sources or several steps",
+      "pack": "retrieval",
+      "verified_at": "2026-08-12",
+      "stale_after": "90d"
+    },
+    {
+      "id": "chunking-strategies",
+      "path": "blueprints/chunking-strategies.md",
+      "title": "Chunking strategies",
+      "use_when": "Deciding how documents are split before indexing; retrieved chunks are truncated, mix several topics, or lose the structure of the source",
+      "pack": "retrieval",
+      "verified_at": "2026-08-12",
+      "stale_after": "90d"
+    },
+    {
+      "id": "context-engineering",
+      "path": "blueprints/context-engineering.md",
+      "title": "Context engineering",
+      "use_when": "Deciding what occupies the model's context on a long run: the agent forgets what was said early on, quality falls off as the run grows, or cost is dominated by re-sending history",
+      "pack": "agent core",
+      "verified_at": "2026-08-12",
+      "stale_after": "90d"
+    },
+    {
+      "id": "contextual-retrieval",
+      "path": "blueprints/contextual-retrieval.md",
+      "title": "Contextual retrieval",
+      "use_when": "Retrieved chunks are relevant but unusable on their own — pronouns without antecedents, numbers without units, sections without a subject",
+      "pack": "retrieval",
+      "verified_at": "2026-08-12",
+      "stale_after": "90d"
+    },
+    {
+      "id": "cost-and-rate-limits",
+      "path": "blueprints/cost-and-rate-limits.md",
+      "title": "Cost and rate limits",
+      "use_when": "Token spend is unpredictable or unattributable, the bill grows faster than usage, or provider 429s are reaching users",
+      "pack": "LLM infrastructure",
+      "verified_at": "2026-08-12",
+      "stale_after": "90d"
+    },
+    {
+      "id": "data-quality-and-pii",
+      "path": "blueprints/data-quality-and-pii.md",
+      "title": "Data quality and PII",
+      "use_when": "Validating what enters the index, and detecting, redacting or gating personal data before it is irreversibly embedded, logged and retrievable",
+      "pack": "data pipelines",
+      "verified_at": "2026-08-12",
+      "stale_after": "90d"
+    },
+    {
+      "id": "document-parsing",
+      "path": "blueprints/document-parsing.md",
+      "title": "Document parsing",
+      "use_when": "Inputs are PDFs, Office files, HTML or scans and have to become clean text that keeps headings, tables, reading order and page provenance",
+      "pack": "data pipelines",
+      "verified_at": "2026-08-12",
+      "stale_after": "90d"
+    },
+    {
+      "id": "embedding-pipeline",
+      "path": "blueprints/embedding-pipeline.md",
+      "title": "Embedding pipeline",
+      "use_when": "Embedding text at scale: batching, rate limits, caching, retries, and the migration path for the day the embedding model changes",
+      "pack": "data pipelines",
+      "verified_at": "2026-08-12",
+      "stale_after": "90d"
+    },
+    {
+      "id": "eval-harness-design",
+      "path": "blueprints/eval-harness-design.md",
+      "title": "Eval harness design",
+      "use_when": "Turning 'this seems better' into a number: the dataset, the scorers and the runner, before the second change to any LLM system",
+      "pack": "evaluation",
+      "verified_at": "2026-08-12",
+      "stale_after": "90d"
+    },
+    {
+      "id": "evaluator-optimizer",
+      "path": "blueprints/evaluator-optimizer.md",
+      "title": "Evaluator and optimizer",
+      "use_when": "First drafts are reliably mediocre and the quality criteria can be stated, so a critic scores each attempt and the generator revises until it clears a bar",
+      "pack": "agent workflows",
+      "verified_at": "2026-08-12",
+      "stale_after": "90d"
+    },
+    {
+      "id": "few-shot-and-reasoning",
+      "path": "blueprints/few-shot-and-reasoning.md",
+      "title": "Few-shot examples and reasoning",
+      "use_when": "Output format is inconsistent, or the task needs multi-step derivation, and it is unclear whether to add examples or a reasoning scaffold",
+      "pack": "prompting",
+      "verified_at": "2026-08-12",
+      "stale_after": "90d"
+    },
+    {
+      "id": "framework-selection",
+      "path": "blueprints/framework-selection.md",
+      "title": "Framework selection",
+      "use_when": "Choosing what an agent runs on — a plain loop, a graph framework, a provider SDK or a managed platform — at the start of a project, or revisiting that choice",
+      "pack": "agent core",
+      "verified_at": "2026-08-12",
+      "stale_after": "90d"
+    },
+    {
+      "id": "gateway-and-routing",
+      "path": "blueprints/gateway-and-routing.md",
+      "title": "LLM gateway",
+      "use_when": "More than one service or provider is being called, and keys, retries, fallbacks, caching, quotas and cost attribution should sit in one place in front of them",
+      "pack": "LLM infrastructure",
+      "verified_at": "2026-08-12",
+      "stale_after": "90d"
+    },
+    {
+      "id": "graph-rag",
+      "path": "blueprints/graph-rag.md",
+      "title": "GraphRAG",
+      "use_when": "Questions are about relationships between entities, or need aggregating across the whole corpus, which independent chunk retrieval structurally cannot answer",
+      "pack": "retrieval",
+      "verified_at": "2026-08-12",
+      "stale_after": "90d"
+    },
+    {
+      "id": "guardrails-and-injection-defense",
+      "path": "blueprints/guardrails-and-injection-defense.md",
+      "title": "Guardrails and injection defence",
+      "use_when": "The system reads content it did not author — user text, web pages, email, uploaded files, third-party tool results — and a model follows instructions hidden inside it",
+      "pack": "prompting",
+      "verified_at": "2026-08-12",
+      "stale_after": "90d"
+    },
+    {
+      "id": "human-in-the-loop",
+      "path": "blueprints/human-in-the-loop.md",
+      "title": "Human in the loop",
+      "use_when": "An agent can spend money, message people, delete data or write to production, and some actions need an approval gate, a sandbox or a dry run before they execute",
+      "pack": "agent core",
+      "verified_at": "2026-08-12",
+      "stale_after": "90d"
+    },
+    {
+      "id": "hybrid-search-rrf",
+      "path": "blueprints/hybrid-search-rrf.md",
+      "title": "Hybrid search with RRF",
+      "use_when": "Search misses exact strings — error codes, SKUs, function names, proper nouns — or recall is short with embeddings alone, so lexical and dense results have to be fused",
+      "pack": "retrieval",
+      "verified_at": "2026-08-12",
+      "stale_after": "90d"
+    },
+    {
+      "id": "incremental-sync-cdc",
+      "path": "blueprints/incremental-sync-cdc.md",
+      "title": "Incremental sync and CDC",
+      "use_when": "Keeping a derived index current by processing only what changed; a full re-run is too slow or too costly, or the index has drifted from its source",
+      "pack": "data pipelines",
+      "verified_at": "2026-08-12",
+      "stale_after": "90d"
+    },
+    {
+      "id": "ingestion-pipeline",
+      "path": "blueprints/ingestion-pipeline.md",
+      "title": "Ingestion pipeline",
+      "use_when": "Documents or records have to be loaded continuously into an index or store, with idempotency, incremental runs, and one bad document not stopping the batch",
+      "pack": "data pipelines",
+      "verified_at": "2026-08-12",
+      "stale_after": "90d"
+    },
+    {
+      "id": "llm-as-judge",
+      "path": "blueprints/llm-as-judge.md",
+      "title": "LLM as judge",
+      "use_when": "Quality is genuinely subjective and no deterministic check exists, so a model scores the output; or the judge's scores disagree with human raters",
+      "pack": "evaluation",
+      "verified_at": "2026-08-12",
+      "stale_after": "90d"
+    },
+    {
+      "id": "mcp-authorization",
+      "path": "blueprints/mcp-authorization.md",
+      "title": "MCP authorization",
+      "use_when": "A remote or multi-user MCP server has to establish who is calling and what they may do: OAuth 2.1, issuer validation, and scoping that survives prompt injection",
+      "pack": "MCP servers",
+      "verified_at": "2026-08-12",
+      "stale_after": "90d"
+    },
+    {
+      "id": "mcp-protocol-overview",
+      "path": "blueprints/mcp-protocol-overview.md",
+      "title": "MCP protocol overview",
+      "use_when": "A capability has to be reachable from more than one AI application or owned by another team, and MCP is the candidate; understanding the protocol before building on it",
+      "pack": "MCP servers",
+      "verified_at": "2026-08-12",
+      "stale_after": "90d"
+    },
+    {
+      "id": "mcp-server-design",
+      "path": "blueprints/mcp-server-design.md",
+      "title": "MCP server design",
+      "use_when": "Building an MCP server someone else will use: what it exposes, which primitive each capability should be, state and errors across a stateless boundary, versioning",
+      "pack": "MCP servers",
+      "verified_at": "2026-08-12",
+      "stale_after": "90d"
+    },
+    {
+      "id": "mcp-tool-design",
+      "path": "blueprints/mcp-tool-design.md",
+      "title": "MCP tool design",
+      "use_when": "Designing the tool surface of an MCP server for consumers you will never meet, running models you did not choose, in contexts you cannot see",
+      "pack": "MCP servers",
+      "verified_at": "2026-08-12",
+      "stale_after": "90d"
+    },
+    {
+      "id": "mcp-transports",
+      "path": "blueprints/mcp-transports.md",
+      "title": "MCP transports",
+      "use_when": "Deciding between stdio and Streamable HTTP for shipping a server, or migrating one written before the 2026-07-28 revision",
+      "pack": "MCP servers",
+      "verified_at": "2026-08-12",
+      "stale_after": "90d"
+    },
+    {
+      "id": "memory-architecture",
+      "path": "blueprints/memory-architecture.md",
+      "title": "Memory architecture",
+      "use_when": "The agent has to remember across sessions: facts learned in one run applying to the next, user preferences that persist, or any store of knowledge outside the context window",
+      "pack": "agent core",
+      "verified_at": "2026-08-12",
+      "stale_after": "90d"
+    },
+    {
+      "id": "observability-tracing",
+      "path": "blueprints/observability-tracing.md",
+      "title": "Observability and tracing",
+      "use_when": "A production run cannot be reconstructed: no traces of LLM calls and agent steps with inputs, outputs, tokens, cost and outcome, and a user's complaint cannot be reproduced",
+      "pack": "LLM infrastructure",
+      "verified_at": "2026-08-12",
+      "stale_after": "90d"
+    },
+    {
+      "id": "orchestrator-workers",
+      "path": "blueprints/orchestrator-workers.md",
+      "title": "Orchestrator and workers",
+      "use_when": "A lead model has to split a task into subtasks at runtime and dispatch them to workers with their own context windows; multi-agent, search-heavy work",
+      "pack": "agent workflows",
+      "verified_at": "2026-08-12",
+      "stale_after": "90d"
+    },
+    {
+      "id": "parallelization",
+      "path": "blueprints/parallelization.md",
+      "title": "Parallelization",
+      "use_when": "Running model calls concurrently — independent sections merged at the end, or the same task sampled several times and voted on to raise reliability",
+      "pack": "agent workflows",
+      "verified_at": "2026-08-12",
+      "stale_after": "90d"
+    },
+    {
+      "id": "progressive-tool-discovery",
+      "path": "blueprints/progressive-tool-discovery.md",
+      "title": "Progressive tool discovery",
+      "use_when": "The agent has more than about fifteen tools, tool schemas dominate the prompt, or accuracy drops with every tool added",
+      "pack": "agent core",
+      "verified_at": "2026-08-12",
+      "stale_after": "90d"
+    },
+    {
+      "id": "prompt-caching",
+      "path": "blueprints/prompt-caching.md",
+      "title": "Prompt caching",
+      "use_when": "The same prefix goes out on every call and should be billed once; or caching is configured and the hit rate is near zero",
+      "pack": "prompting",
+      "verified_at": "2026-08-12",
+      "stale_after": "90d"
+    },
+    {
+      "id": "prompt-chaining",
+      "path": "blueprints/prompt-chaining.md",
+      "title": "Prompt chaining",
+      "use_when": "The steps are known in advance and always the same, and each one can be checked before the next runs — a fixed pipeline of model calls rather than an agent",
+      "pack": "agent workflows",
+      "verified_at": "2026-08-12",
+      "stale_after": "90d"
+    },
+    {
+      "id": "prompt-structure",
+      "path": "blueprints/prompt-structure.md",
+      "title": "Prompt structure",
+      "use_when": "Writing or reworking a production prompt: what belongs in the system block, in what order, how the sections are delimited, and which parts have to stay byte-stable",
+      "pack": "prompting",
+      "verified_at": "2026-08-12",
+      "stale_after": "90d"
+    },
+    {
+      "id": "query-transformation",
+      "path": "blueprints/query-transformation.md",
+      "title": "Query transformation",
+      "use_when": "Questions are conversational, vague or multi-part, or worded nothing like the corpus, so the query has to be rewritten, expanded or decomposed before it reaches the index",
+      "pack": "retrieval",
       "verified_at": "2026-08-12",
       "stale_after": "90d"
     },
@@ -16,7 +358,97 @@
       "path": "blueprints/rag-baseline.md",
       "title": "RAG baseline",
       "use_when": "Answers have to come from a document corpus the model was not trained on, the corpus changes, or answers must cite their sources; retrieval is being set up, or the model hallucinates and cannot attribute what it says",
-      "pack": "ai-agents",
+      "pack": "retrieval",
+      "verified_at": "2026-08-12",
+      "stale_after": "90d"
+    },
+    {
+      "id": "rag-evaluation",
+      "path": "blueprints/rag-evaluation.md",
+      "title": "RAG evaluation",
+      "use_when": "Measuring a RAG system so a regression points at retrieval or at generation, instead of tuning chunk size, k and the prompt by feel",
+      "pack": "retrieval",
+      "verified_at": "2026-08-12",
+      "stale_after": "90d"
+    },
+    {
+      "id": "regression-and-ci-evals",
+      "path": "blueprints/regression-and-ci-evals.md",
+      "title": "Regression and CI evals",
+      "use_when": "Wiring evals into the development loop so a quality regression blocks a merge instead of reaching users",
+      "pack": "evaluation",
+      "verified_at": "2026-08-12",
+      "stale_after": "90d"
+    },
+    {
+      "id": "reranking",
+      "path": "blueprints/reranking.md",
+      "title": "Reranking",
+      "use_when": "The right chunk is retrieved but ranked far down: recall is high and precision in the top few is low, or k must be cut before the prompt without losing the answer",
+      "pack": "retrieval",
+      "verified_at": "2026-08-12",
+      "stale_after": "90d"
+    },
+    {
+      "id": "routing",
+      "path": "blueprints/routing.md",
+      "title": "Routing",
+      "use_when": "Inputs fall into distinct families needing different prompts, models or tools, and one prompt for all of them degrades every case; classifying an input before handling it",
+      "pack": "agent workflows",
+      "verified_at": "2026-08-12",
+      "stale_after": "90d"
+    },
+    {
+      "id": "security-and-secrets",
+      "path": "blueprints/security-and-secrets.md",
+      "title": "Security and secrets",
+      "use_when": "Credential scoping, storage and rotation for a system where a model can call tools, read external content, or serve more than one tenant",
+      "pack": "LLM infrastructure",
+      "verified_at": "2026-08-12",
+      "stale_after": "90d"
+    },
+    {
+      "id": "simulated-users",
+      "path": "blueprints/simulated-users.md",
+      "title": "Simulated users",
+      "use_when": "Evaluating a multi-turn or conversational agent, or offline scores look good while production behaviour does not match them",
+      "pack": "evaluation",
+      "verified_at": "2026-08-12",
+      "stale_after": "90d"
+    },
+    {
+      "id": "skill-engineering",
+      "path": "blueprints/skill-engineering.md",
+      "title": "Skill engineering",
+      "use_when": "Writing the markdown procedures an agent loads on demand — skills, playbooks, the instructions that keep being pasted into chat by hand",
+      "pack": "agent core",
+      "verified_at": "2026-08-12",
+      "stale_after": "90d"
+    },
+    {
+      "id": "small-models-and-distillation",
+      "path": "blueprints/small-models-and-distillation.md",
+      "title": "Small models and distillation",
+      "use_when": "One task type dominates the token bill or the latency budget and should move to a smaller model, a fine-tune or a distilled student",
+      "pack": "LLM infrastructure",
+      "verified_at": "2026-08-12",
+      "stale_after": "90d"
+    },
+    {
+      "id": "state-machine-reducer",
+      "path": "blueprints/state-machine-reducer.md",
+      "title": "State machine and reducer",
+      "use_when": "State changes have to be deterministic and auditable while the model only decides; the agent loses the thread because its state lives in the conversation",
+      "pack": "agent core",
+      "verified_at": "2026-08-12",
+      "stale_after": "90d"
+    },
+    {
+      "id": "structured-output",
+      "path": "blueprints/structured-output.md",
+      "title": "Structured output",
+      "use_when": "The model's output feeds code and has to parse every time: JSON that keeps failing, schema-constrained decoding, tool-call schemas, validation and repair",
+      "pack": "prompting",
       "verified_at": "2026-08-12",
       "stale_after": "90d"
     },
@@ -25,13 +457,30 @@
       "path": "blueprints/tool-design.md",
       "title": "Tool design",
       "use_when": "An agent has more than one tool and picks the wrong one, sends malformed arguments, or misreads what a tool returned; tool schemas, descriptions and return shapes are being written or reworked",
-      "pack": "ai-agents",
+      "pack": "agent core",
+      "verified_at": "2026-08-12",
+      "stale_after": "90d"
+    },
+    {
+      "id": "vector-store-selection",
+      "path": "blueprints/vector-store-selection.md",
+      "title": "Vector store selection",
+      "use_when": "Choosing where embeddings live and which index and metadata filtering they use; or the store's recall, p95 latency or cost has become the constraint",
+      "pack": "retrieval",
       "verified_at": "2026-08-12",
       "stale_after": "90d"
     }
   ],
   "skills": [
+    "audit-agent-security",
     "blueprint-author",
-    "map"
+    "build-agent-loop",
+    "build-eval-set",
+    "build-rag-pipeline",
+    "design-agent-tools",
+    "diagnose-rag-failure",
+    "map",
+    "write-agent-tests",
+    "write-system-prompt"
   ]
 }
