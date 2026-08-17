@@ -1,41 +1,33 @@
 # Specrun
 
-Blueprints and skills for the AI you already code with.
+**Blueprints and skills for the AI you already code with.**
 
-A **blueprint** records how a project builds a particular kind of thing — the shape, the
-contracts, the failure modes, and why each choice was made. Specrun installs a small set of them
-into your project, together with a router skill whose job is to notice when one of them applies.
-You keep working in chat as before; when the task matches a blueprint, your agent reads it first
-and builds along lines you have already settled instead of designing them again.
+A **blueprint** records how a project builds a particular kind of thing — the shape, the contracts, the failure modes, and why each choice was made. Specrun installs a small set of them into your project, together with a router skill whose job is to notice when one of them applies.
 
-It also brings skills that stand on their own: two that run the mechanism — one writes a new
-blueprint out of work you have just finished, one draws the project's architecture as a single
-HTML file — and eight that do a job on request, from building an agent loop to auditing one for
-injection risk.
+You keep working in chat as before. When the task matches a blueprint, your agent reads it first and builds along lines you have already settled instead of designing them again.
 
-Everything is plain markdown in your repository. Nothing calls a model except your agent, in your
-chat, on your account.
+It also brings skills that stand on their own: two that run the mechanism (one writes a new blueprint from work you just finished, one draws the project architecture as a single HTML file) and eight that do a job on request — from building an agent loop to auditing one for injection risk.
+
+Everything is plain Markdown in your repository. Nothing calls a model except your agent, in your chat, on your account.
 
 ![An architecture map drawn by the map skill](https://raw.githubusercontent.com/ysz7/specrun/main/design/media/map-example.png)
 
-*The `map` skill on another project: blocks named after the jobs the system does, not after its
-directories. One self-contained HTML file, no network.*
+*The `map` skill on another project: blocks named after the jobs the system does, not after its directories. One self-contained HTML file, no network.*
 
 ---
 
 ## Install
 
-There are two channels, and they are independent — the marketplace is useful with no CLI at all.
+There are two independent channels. The marketplace works with no CLI at all.
 
-**As a Claude Code plugin** — the blueprints and skills, nothing else:
+**Claude Code plugin** (blueprints and skills only):
 
 ```
 /plugin marketplace add ysz7/specrun
 /plugin install specrun@specrun
 ```
 
-**As a CLI** — the same content, plus installation into one project, a lock file that protects
-your edits, and `specrun scan`:
+**CLI** (same content + project installation, lock file, and `specrun scan`):
 
 ```
 uv tool install specrun
@@ -43,25 +35,20 @@ cd your-project
 specrun init
 ```
 
-`init` writes the router and the blueprints into `.claude/skills/`, records what it wrote in
-`.specrun/lock.json`, and adds the generated map to your `.gitignore`. Commit the rest: what your
-agent reads is worth reviewing, and a teammate who clones the repository gets the same answers
-without installing anything.
+`init` writes the router and the blueprints into `.claude/skills/`, records what it wrote in `.specrun/lock.json`, and adds the generated map to your `.gitignore`. Commit the rest: what your agent reads is worth reviewing, and a teammate who clones the repository gets the same answers without installing anything.
 
-Install one or the other. With both, the same skills arrive twice under slightly different names,
-and the duplicates compete for the same requests.
+Install **one or the other**. With both, the same skills arrive twice under slightly different names and compete for the same requests.
 
 ### Updating
 
-The plugin, from inside Claude Code — the first line refreshes the catalog, the second installs
-what it found:
+Plugin (from inside Claude Code):
 
 ```
 /plugin marketplace update specrun
 /plugin update specrun@specrun
 ```
 
-The CLI, once per machine and then once per project:
+CLI:
 
 ```
 uv tool upgrade specrun
@@ -69,49 +56,43 @@ cd your-project
 specrun sync
 ```
 
-`sync` rewrites the blueprints and skills it installed and leaves every file you have edited by
-hand exactly as it is, listing them at the end. Your own blueprints in `.specrun/local/` are never
-touched. Nothing is upgraded behind your back: without `sync`, a project keeps the content it was
-given, and `specrun status` is what tells you a newer set is available.
+`sync` rewrites the blueprints and skills it installed and leaves every file you have edited by hand exactly as it is (it lists them at the end). Your own blueprints in `.specrun/local/` are never touched. Without `sync`, a project keeps the content it was given. Use `specrun status` to see if a newer set is available.
 
 ---
 
 ## What you get
 
-### Skills
+### Skills that run the mechanism
 
-Three of them run the mechanism itself:
+| Skill | Purpose |
+|-------|---------|
+| [`blueprints`](plugins/specrun/skills/blueprints/SKILL.md) | The router: reads the task, picks a blueprint or says there is none |
+| [`blueprint-author`](plugins/specrun/skills/blueprint-author/SKILL.md) | Writes a new blueprint, or your project's own version of a bundled one |
+| [`map`](plugins/specrun/skills/map/SKILL.md) | Draws the architecture as one self-contained HTML file |
 
-| Skill | |
-|---|---|
-| [`blueprints`](plugins/specrun/skills/blueprints/SKILL.md) | the router: reads the task, picks a blueprint or says there is none |
-| [`blueprint-author`](plugins/specrun/skills/blueprint-author/SKILL.md) | writes a new blueprint, or your project's own version of a bundled one |
-| [`map`](plugins/specrun/skills/map/SKILL.md) | draws the architecture as one self-contained HTML file |
+### Skills that do a job on request
 
-The rest do a job when you ask for it — in chat by describing the task, or directly as `/name`:
+Call them in chat by describing the task, or directly as `/name` (plugin namespace: `/specrun:name`).
 
-| Skill | When |
-|---|---|
-| [`build-agent-loop`](plugins/specrun/skills/build-agent-loop/SKILL.md) | building an agent from scratch: tool dispatch, step budgets, traces |
-| [`design-agent-tools`](plugins/specrun/skills/design-agent-tools/SKILL.md) | the agent picks the wrong tool, passes bad arguments, or drowns in tool output |
-| [`write-system-prompt`](plugins/specrun/skills/write-system-prompt/SKILL.md) | writing or reworking a production system prompt |
-| [`build-rag-pipeline`](plugins/specrun/skills/build-rag-pipeline/SKILL.md) | setting up retrieval over your own documents |
-| [`diagnose-rag-failure`](plugins/specrun/skills/diagnose-rag-failure/SKILL.md) | a RAG answer is wrong and it is unclear which stage failed |
-| [`build-eval-set`](plugins/specrun/skills/build-eval-set/SKILL.md) | a labelled eval set and scorers, so a change can be shown to have helped |
-| [`write-agent-tests`](plugins/specrun/skills/write-agent-tests/SKILL.md) | tests for an agent: mocked tools, trajectories, adversarial cases |
-| [`audit-agent-security`](plugins/specrun/skills/audit-agent-security/SKILL.md) | reviewing an agent for injection reaching real actions, over-scoped credentials, ungated tools |
-
-Installed as a plugin, skills carry the plugin's namespace: `/specrun:map` rather than `/map`.
+| Skill | When to use |
+|-------|-------------|
+| [`build-agent-loop`](plugins/specrun/skills/build-agent-loop/SKILL.md) | Building an agent from scratch: tool dispatch, step budgets, traces |
+| [`design-agent-tools`](plugins/specrun/skills/design-agent-tools/SKILL.md) | The agent picks the wrong tool, passes bad arguments, or drowns in tool output |
+| [`write-system-prompt`](plugins/specrun/skills/write-system-prompt/SKILL.md) | Writing or reworking a production system prompt |
+| [`build-rag-pipeline`](plugins/specrun/skills/build-rag-pipeline/SKILL.md) | Setting up retrieval over your own documents |
+| [`diagnose-rag-failure`](plugins/specrun/skills/diagnose-rag-failure/SKILL.md) | A RAG answer is wrong and it is unclear which stage failed |
+| [`build-eval-set`](plugins/specrun/skills/build-eval-set/SKILL.md) | A labelled eval set and scorers, so a change can be shown to have helped |
+| [`write-agent-tests`](plugins/specrun/skills/write-agent-tests/SKILL.md) | Tests for an agent: mocked tools, trajectories, adversarial cases |
+| [`audit-agent-security`](plugins/specrun/skills/audit-agent-security/SKILL.md) | Reviewing an agent for injection reaching real actions, over-scoped credentials, ungated tools |
 
 ### Blueprints
 
-Fifty-two of them ship today. You never pick one from this list in normal use — the router does,
-from the same table, when the task matches. It is here so you know what your agent has to hand.
+Fifty-two of them ship today. You never pick one from this list in normal use — the router does it when the task matches. The list is here so you know what your agent has available.
 
 **Agent core**
 
 | Blueprint | When it applies |
-|---|---|
+|-----------|-----------------|
 | [Agent loop](plugins/specrun/skills/blueprints/blueprints/agent-loop.md) | Building the loop that calls a model, runs the tools it asks for and repeats until it stops; or an agent runs away, loops, or will not stop on its own |
 | [Context engineering](plugins/specrun/skills/blueprints/blueprints/context-engineering.md) | Deciding what occupies the model's context on a long run: the agent forgets what was said early on, quality falls off as the run grows, or cost is dominated by re-sending history |
 | [Framework selection](plugins/specrun/skills/blueprints/blueprints/framework-selection.md) | Choosing what an agent runs on — a plain loop, a graph framework, a provider SDK or a managed platform — at the start of a project, or revisiting that choice |
@@ -125,7 +106,7 @@ from the same table, when the task matches. It is here so you know what your age
 **Agent workflows**
 
 | Blueprint | When it applies |
-|---|---|
+|-----------|-----------------|
 | [Evaluator and optimizer](plugins/specrun/skills/blueprints/blueprints/evaluator-optimizer.md) | First drafts are reliably mediocre and the quality criteria can be stated, so a critic scores each attempt and the generator revises until it clears a bar |
 | [Orchestrator and workers](plugins/specrun/skills/blueprints/blueprints/orchestrator-workers.md) | A lead model has to split a task into subtasks at runtime and dispatch them to workers with their own context windows; multi-agent, search-heavy work |
 | [Parallelization](plugins/specrun/skills/blueprints/blueprints/parallelization.md) | Running model calls concurrently — independent sections merged at the end, or the same task sampled several times and voted on to raise reliability |
@@ -135,7 +116,7 @@ from the same table, when the task matches. It is here so you know what your age
 **Retrieval**
 
 | Blueprint | When it applies |
-|---|---|
+|-----------|-----------------|
 | [Agentic RAG](plugins/specrun/skills/blueprints/blueprints/agentic-rag.md) | One retrieval pass is not enough: the agent has to search, judge what came back and search again, across several sources or several steps |
 | [Chunking strategies](plugins/specrun/skills/blueprints/blueprints/chunking-strategies.md) | Deciding how documents are split before indexing; retrieved chunks are truncated, mix several topics, or lose the structure of the source |
 | [Contextual retrieval](plugins/specrun/skills/blueprints/blueprints/contextual-retrieval.md) | Retrieved chunks are relevant but unusable on their own — pronouns without antecedents, numbers without units, sections without a subject |
@@ -150,7 +131,7 @@ from the same table, when the task matches. It is here so you know what your age
 **Prompting**
 
 | Blueprint | When it applies |
-|---|---|
+|-----------|-----------------|
 | [Few-shot examples and reasoning](plugins/specrun/skills/blueprints/blueprints/few-shot-and-reasoning.md) | Output format is inconsistent, or the task needs multi-step derivation, and it is unclear whether to add examples or a reasoning scaffold |
 | [Guardrails and injection defence](plugins/specrun/skills/blueprints/blueprints/guardrails-and-injection-defense.md) | The system reads content it did not author — user text, web pages, email, uploaded files, third-party tool results — and a model follows instructions hidden inside it |
 | [Prompt caching](plugins/specrun/skills/blueprints/blueprints/prompt-caching.md) | The same prefix goes out on every call and should be billed once; or caching is configured and the hit rate is near zero |
@@ -160,7 +141,7 @@ from the same table, when the task matches. It is here so you know what your age
 **Evaluation**
 
 | Blueprint | When it applies |
-|---|---|
+|-----------|-----------------|
 | [Agent trajectory evaluation](plugins/specrun/skills/blueprints/blueprints/agent-trajectory-eval.md) | Grading the path a multi-step agent took — which tools it chose, in what order, how it recovered from errors and what it cost — not only its final answer |
 | [Eval harness design](plugins/specrun/skills/blueprints/blueprints/eval-harness-design.md) | Turning 'this seems better' into a number: the dataset, the scorers and the runner, before the second change to any LLM system |
 | [LLM as judge](plugins/specrun/skills/blueprints/blueprints/llm-as-judge.md) | Quality is genuinely subjective and no deterministic check exists, so a model scores the output; or the judge's scores disagree with human raters |
