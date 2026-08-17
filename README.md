@@ -1,4 +1,6 @@
-# Specrun
+<p align="center">
+  <img src="https://raw.githubusercontent.com/ysz7/specrun/main/design/media/banner.png" alt="Specrun - AI Coding Agents Tool" width="100%">
+</p>
 
 **Blueprints and skills for the AI you already code with.**
 
