@@ -4,7 +4,7 @@
 
 **Blueprints and skills for the AI you already code with.**
 
-A **blueprint** records how a project builds a particular kind of thing — the shape, the contracts, the failure modes, and why each choice was made. Specrun installs a small set of them into your project, together with a router skill whose job is to notice when one of them applies.
+A **blueprint** records how a project builds a particular kind of thing - the shape, the contracts, the failure modes, and why each choice was made. Specrun installs a small set of them into your project, together with a router skill whose job is to notice when one of them applies.
 
 You keep working in chat as before. When the task matches a blueprint, your agent reads it first and builds along lines you have already settled instead of designing them again.
 
@@ -326,7 +326,7 @@ that, so other targets are a matter of adding one.
 
 ## Licence
 
-MIT © 2026 Denys Zhodik.
+MIT © 2026 Denys Zhodik
 
 The map's rendering approach is based on
 [`Cocoon-AI/architecture-diagram-generator`](https://github.com/Cocoon-AI/architecture-diagram-generator)
